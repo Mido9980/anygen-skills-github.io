@@ -249,8 +249,8 @@ def query_task(api_key, task_id, extra_headers=None):
         return None
 
 
-def poll_task(api_key, task_id, max_time=MAX_POLL_TIME, extra_headers=None):
-    """Poll task until completion or failure."""
+def poll_task(api_key, task_id, max_time=MAX_POLL_TIME, extra_headers=None, output_dir=None):
+    """Poll task until completion or failure. Auto-downloads file if output_dir is provided."""
     log_info(f"查询任务状态: {task_id}")
 
     start_time = time.time()
@@ -277,14 +277,26 @@ def poll_task(api_key, task_id, max_time=MAX_POLL_TIME, extra_headers=None):
 
         if status == "completed":
             output = task.get("output", {})
+            task_url = output.get("task_url", f"{API_BASE}/task/{task_id}")
             log_success("任务完成!")
-            print(f"文件名: {output.get('file_name', 'N/A')}")
-            print(f"下载链接: {output.get('file_url', 'N/A')}")
-            print(f"链接有效期至: {format_timestamp(output.get('expires_at'))}")
             if output.get("slide_count"):
                 print(f"PPT 页数: {output.get('slide_count')}")
             if output.get("word_count"):
                 print(f"字数: {output.get('word_count')}")
+
+            # Auto-download file if output_dir is provided and file_url exists
+            file_url = output.get("file_url")
+            if output_dir and file_url:
+                local_path = _download_to_local(file_url, output.get("file_name"), output_dir)
+                if local_path:
+                    print(f"[RESULT] Local file: {local_path}")
+            elif file_url:
+                # No output_dir, download to current directory
+                local_path = _download_to_local(file_url, output.get("file_name"), ".")
+                if local_path:
+                    print(f"[RESULT] Local file: {local_path}")
+
+            print(f"[RESULT] Task URL: {task_url}")
             return task
 
         elif status == "failed":
@@ -295,8 +307,33 @@ def poll_task(api_key, task_id, max_time=MAX_POLL_TIME, extra_headers=None):
         time.sleep(POLL_INTERVAL)
 
 
+def _download_to_local(file_url, file_name, output_dir):
+    """Download file from URL to local directory. Returns local file path or None."""
+    if not file_url:
+        return None
+
+    log_info("下载文件中...")
+
+    try:
+        response = requests.get(file_url, timeout=120)
+        response.raise_for_status()
+    except requests.RequestException as e:
+        log_error(f"下载失败: {e}")
+        return None
+
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    file_path = output_path / (file_name or "output")
+    with open(file_path, "wb") as f:
+        f.write(response.content)
+
+    log_success(f"文件已保存: {file_path}")
+    return str(file_path)
+
+
 def download_file(api_key, task_id, output_dir, extra_headers=None):
-    """Download the generated file."""
+    """Download the generated file. Returns local file path or False."""
     # First query task to get file URL
     task = query_task(api_key, task_id, extra_headers)
     if not task:
@@ -309,48 +346,31 @@ def download_file(api_key, task_id, output_dir, extra_headers=None):
     output = task.get("output", {})
     file_url = output.get("file_url")
     file_name = output.get("file_name")
+    task_url = output.get("task_url", f"{API_BASE}/task/{task_id}")
 
     if not file_url:
         log_error("无法获取下载链接")
         return False
 
-    log_info("下载文件中...")
-
-    try:
-        response = requests.get(file_url, timeout=120)
-        response.raise_for_status()
-    except requests.RequestException as e:
-        log_error(f"下载失败: {e}")
-        return False
-
-    # Ensure output directory exists
-    output_path = Path(output_dir)
-    output_path.mkdir(parents=True, exist_ok=True)
-
-    # Save file
-    file_path = output_path / file_name
-    with open(file_path, "wb") as f:
-        f.write(response.content)
-
-    log_success(f"文件已保存: {file_path}")
-    return True
+    local_path = _download_to_local(file_url, file_name, output_dir)
+    if local_path:
+        print(f"[RESULT] Local file: {local_path}")
+        print(f"[RESULT] Task URL: {task_url}")
+        return local_path
+    return False
 
 
 def run_full_workflow(api_key, operation, prompt, output_dir, extra_headers=None, style=None, **kwargs):
-    """Run the full workflow: create -> poll -> download."""
+    """Run the full workflow: create -> poll -> auto download."""
     # Create task
     task_id = create_task(api_key, operation, prompt, extra_headers=extra_headers, style=style, **kwargs)
     if not task_id:
         return False
 
-    # Poll for completion
-    task = poll_task(api_key, task_id, extra_headers=extra_headers)
+    # Poll for completion (auto-downloads if output_dir is provided)
+    task = poll_task(api_key, task_id, extra_headers=extra_headers, output_dir=output_dir or ".")
     if not task or task.get("status") != "completed":
         return False
-
-    # Download file
-    if output_dir:
-        return download_file(api_key, task_id, output_dir, extra_headers=extra_headers)
 
     return True
 
@@ -399,9 +419,10 @@ Examples:
     create_parser.add_argument("--style", "-s", help="Style preference (e.g., '商务正式', '简约现代', '科技感')")
 
     # Poll command
-    poll_parser = subparsers.add_parser("poll", help="Poll task status until completion")
+    poll_parser = subparsers.add_parser("poll", help="Poll task status until completion and auto-download")
     add_common_args(poll_parser)
     poll_parser.add_argument("--task-id", required=True, help="Task ID to poll")
+    poll_parser.add_argument("--output", help="Output directory for auto-download (default: current directory)")
 
     # Download command
     download_parser = subparsers.add_parser("download", help="Download generated file")
@@ -531,7 +552,8 @@ Examples:
         sys.exit(0 if task_id else 1)
 
     elif args.command == "poll":
-        task = poll_task(api_key, args.task_id, extra_headers=extra_headers)
+        output_dir = getattr(args, 'output', None) or "."
+        task = poll_task(api_key, args.task_id, extra_headers=extra_headers, output_dir=output_dir)
         if task and task.get("status") == "completed":
             sys.exit(0)
         else:
