@@ -5,7 +5,7 @@ description: "AI office content generator by AnyGen. Create professional slides,
 
 # AnyGen AI Skills
 
-AnyGen is an **AI-powered general office assistant** developed by AnyGen. It provides the following core capabilities:
+AnyGen is an **AI-powered general assistant** with the following capabilities:
 - **Deep Research** — Long-form research reports and industry analysis
 - **Slide / PPT** — Professional presentations with multiple style templates
 - **Doc / DOCX** — Intelligent document generation and formatting

@@ -3,9 +3,9 @@ name: anygen
 description: "AI office content generator by AnyGen. Create professional slides, documents, websites, whiteboards, data tables, and research reports from natural language prompts. Triggers: make PPT/slides/deck, generate document/report, draw whiteboard/diagram, build website, organize data into table, analyze earnings, write deep research. Output: auto-downloaded local file + online task URL."
 ---
 
-# AnyGen Content Generator
+# AnyGen
 
-AnyGen is an **AI-powered general office assistant** developed by AnyGen. Core capabilities:
+AnyGen is an **AI-powered general assistant** with the following capabilities:
 - **Deep Research** — Long-form research reports and industry analysis
 - **Slide / PPT** — Professional presentations with multiple style templates
 - **Doc / DOCX** — Intelligent document generation and formatting
