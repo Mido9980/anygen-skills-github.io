@@ -171,11 +171,23 @@
 
 ## PDF 发送规则
 
-必须使用绝对路径，前缀来自 `config/output.yaml` 的 `absolute_prefix`。
+1. 读取 `config/output.yaml` 中的 `output.report_dir` 和 `output.filename_pattern`
+2. 生成PDF到 `~/.openclaw/workspace/{report_dir}/` 目录（必须在workspace下，否则MEDIA:发送失败）
+3. 发送时使用文件绝对路径（`os.path.expanduser` 展开 `~`）
+4. 发送方式取决于宿主平台:
+   - OpenClaw: `MEDIA:/absolute/path/to/file.pdf`
+   - 其他平台: 按平台文件发送规范
+5. 不硬编码任何用户路径
 
-1. 复制 PDF 到 `{workspace_dir}/`
-2. 按 `MEDIA:{absolute_prefix}/{workspace_dir}/filename.pdf` 发送
-3. 路径必须是绝对路径
+### ⚠️ OpenClaw MEDIA: 发送关键规则
+
+**MEDIA: 指令必须在一条极短的独立消息中发送。**
+
+分两步走：
+- 步骤1: 先发分析结论（纯文字消息）
+- 步骤2: 单独发一条只含 MEDIA: 行的极短消息
+
+❌ 不要把 MEDIA: 混在大段分析文字中（会导致解析失败，文件发不出去）。
 
 ## PDF 引擎
 
