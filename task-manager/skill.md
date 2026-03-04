@@ -89,7 +89,7 @@ Config file location: `~/.config/anygen/config.json`
 | `website` | Website development mode |
 | `smart_draw` | Diagram mode |
 
-**Note**: `slide`, `doc`, and `smart_draw` support file download. Other operations (`chat`, `storybook`, `data_analysis`, `website`) only return a task URL for online viewing.
+**Note**: `slide`, `doc`, and `smart_draw` support file download. Other operations only return a task URL for online viewing.
 
 ## Skill Invocation Flow
 
@@ -207,6 +207,23 @@ python3 ~/.openclaw/skills/anygen/task-manager/scripts/anygen.py download \
   --output ./output/
 ```
 
+### Step 5: Render Diagram to PNG (smart_draw only)
+
+**IMPORTANT**: When the operation is `smart_draw`, the downloaded file (.xml or .json) is a diagram source file, NOT an image. You **MUST** run `render-diagram.sh` to render it to PNG after downloading.
+
+```bash
+# Determine the type based on --smart-draw-format used (default: drawio)
+# drawio -> downloaded .xml file
+# excalidraw -> downloaded .json file
+
+bash ~/.openclaw/skills/anygen/task-manager/scripts/render-diagram.sh drawio ./output/diagram.xml ./output/diagram.png
+
+# Or for excalidraw format:
+bash ~/.openclaw/skills/anygen/task-manager/scripts/render-diagram.sh excalidraw ./output/diagram.json ./output/diagram.png
+```
+
+Dependencies (Node.js, Playwright, Chromium) are auto-installed on first run. Only Node.js (v18+) is required to be pre-installed.
+
 ## One-Click Execution (Create + Poll + Auto Download)
 
 ```bash
@@ -223,6 +240,7 @@ The `run` command will automatically:
 1. Create the task
 2. Poll and wait for completion
 3. **Automatically download the generated file locally**
+4. **For `smart_draw` only**: You MUST then run `render-diagram.sh` (see Step 5) to convert the downloaded source file to PNG. The PNG is the final deliverable, not the .xml/.json file.
 
 ## Output Behavior
 
@@ -231,6 +249,8 @@ The `run` command will automatically:
 - `task_url`: The AnyGen task URL for online viewing/editing
 
 **Do NOT** return `file_url` to the user. The script auto-downloads the file and provides the local path instead.
+
+**For `smart_draw`**: The final output is the **rendered PNG image**, not the downloaded .xml/.json source file. Always return the PNG path to the user.
 
 ### Task Created Successfully
 
@@ -271,112 +291,14 @@ Error message: Generation timeout
 | task not found | Task does not exist | Check if task_id is correct |
 | Generation timeout | Generation timed out | Recreate the task |
 
-## SmartDraw: Diagram Generation & Rendering
+## SmartDraw Reference
 
-The `smart_draw` operation generates diagrams via AnyGen API. It supports configuring the export diagram type, downloading the source file after completion, and rendering it locally to PNG.
+| Format | --smart-draw-format | Export File | Render Command |
+|--------|---------------------|-------------|----------------|
+| DrawIO (default) | `drawio` | `.xml` | `render-diagram.sh drawio input.xml output.png` |
+| Excalidraw | `excalidraw` | `.json` | `render-diagram.sh excalidraw input.json output.png` |
 
-### SmartDraw-Specific Parameters
-
-| Parameter           | Short | Description                            | Default |
-|---------------------|-------|----------------------------------------|---------|
-| --smart-draw-format | -d    | Diagram type: `excalidraw` or `drawio` | drawio  |
-
-**Diagram type details:**
-
-| Type         | Export File   | Best For                                               |
-|--------------|--------------|--------------------------------------------------------|
-| `drawio`     | `.xml` file  | Formal diagrams, UML, structured layouts (recommended) |
-| `excalidraw` | `.json` file | Hand-drawn style, flowcharts, architecture diagrams    |
-
-### SmartDraw Full Workflow
-
-#### Step 1: Create Task and Download Diagram File
-
-```bash
-# Use default drawio format
-python3 ~/.openclaw/skills/anygen/task-manager/scripts/anygen.py run \
-  --operation smart_draw \
-  --prompt "Draw a microservice architecture diagram" \
-  --output ./output/
-
-# Use excalidraw format
-python3 ~/.openclaw/skills/anygen/task-manager/scripts/anygen.py run \
-  --operation smart_draw \
-  --prompt "Draw a microservice architecture diagram" \
-  --smart-draw-format excalidraw \
-  --output ./output/
-```
-
-After task completion, the diagram source file is automatically downloaded to the `--output` directory:
-- drawio -> `output/xxx.xml`
-- excalidraw -> `output/xxx.json`
-
-#### Step 2: Render to PNG
-
-Use `render-diagram.sh` to render the downloaded source file to PNG:
-
-```bash
-bash ~/.openclaw/skills/anygen/task-manager/scripts/render-diagram.sh <type> <input> <output> [options]
-```
-
-**Arguments:**
-
-| Argument | Description                            | Required |
-|----------|----------------------------------------|----------|
-| type     | Diagram type: `excalidraw` or `drawio` | Yes      |
-| input    | Input file path (use `-` for stdin)    | Yes      |
-| output   | Output PNG file path                   | Yes      |
-
-**Options:**
-
-| Option       | Description            | Default |
-|--------------|------------------------|---------|
-| --scale      | PNG scale factor       | 2       |
-| --background | Background color (hex) | #ffffff |
-| --padding    | Export padding in px   | 20      |
-
-**Examples:**
-
-```bash
-# Render DrawIO XML to PNG
-bash ~/.openclaw/skills/anygen/task-manager/scripts/render-diagram.sh drawio output/diagram.xml diagram.png
-
-# Render Excalidraw JSON to PNG
-bash ~/.openclaw/skills/anygen/task-manager/scripts/render-diagram.sh excalidraw output/diagram.json diagram.png
-
-# Custom scale and background
-bash ~/.openclaw/skills/anygen/task-manager/scripts/render-diagram.sh drawio output/diagram.xml diagram.png --scale 3 --background "#f0f0f0"
-```
-
-### SmartDraw Output Example
-
-**Task creation and download:**
-
-```
-[INFO] Creating task...
-[SUCCESS] Task created successfully!
-Task ID: task_abc123xyz
-[PROGRESS] Status: processing, Progress: 60%
-[SUCCESS] Task completed!
-[SUCCESS] File saved: ./output/architecture.xml
-```
-
-**Render to PNG:**
-
-```
-▶ Rendering drawio diagram -> PNG
-Rendering drawio diagram -> PNG (scale=2)...
-Done: diagram.png (245.3 KB)
-✓ Render complete: diagram.png
-```
-
-### Additional Prerequisites for SmartDraw Local Rendering
-
-To render diagrams locally to PNG, you also need:
-
-- Node.js (v18+)
-
-> No manual dependency installation required. Playwright and Chromium are auto-installed on the first run.
+**render-diagram.sh options:** `--scale <n>` (default: 2), `--background <hex>` (default: #ffffff), `--padding <px>` (default: 20)
 
 ## Notes
 
