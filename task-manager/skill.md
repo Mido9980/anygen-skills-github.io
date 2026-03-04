@@ -142,13 +142,14 @@ When `status=completed`, proceed to Step 4. When `status=failed`, report the err
 
 **Progress reporting rules — you MUST follow:**
 
-1. Call `status` every **5-10 seconds**
-2. **Every time progress changes**, report it to the user immediately, e.g.:
-   - "AnyGen is generating your slides... (30%)"
-   - "Almost there, laying out and styling... (90%)"
-3. If progress **stays the same for 30+ seconds**, reassure the user:
-   - "AnyGen is working on deep content generation, this is normal for complex tasks — please wait."
-4. **Do NOT** assume the task is stuck or errored just because progress hasn't changed. AnyGen performs deep generation (content research, layout design, style rendering) which can take minutes at the same progress percentage. Only treat `status=failed` as an error.
+1. Call `status` every **10 seconds** to poll internally
+2. Only notify the user at **milestone progress points**: 25%, 50%, 75%, 90%, and completion. Do NOT report every small change — this is a long-running task (up to 15 min)
+3. Example user-facing messages at milestones:
+   - 25% → "AnyGen is generating content outline..."
+   - 50% → "Content generated, now designing layout..."
+   - 75% → "Styling and polishing..."
+   - 90% → "Almost done, finalizing..."
+4. **Progress may stay at the same percentage for several minutes.** This is normal — AnyGen performs deep generation (content research, layout design, style rendering) at certain stages. Do NOT assume the task is stuck. Only treat `status=failed` as an error.
 
 ### Step 4: Download file
 
