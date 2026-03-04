@@ -138,7 +138,7 @@ def encode_file(file_path):
 
 def create_task(api_key, operation, prompt, language=None, slide_count=None,
                 template=None, ratio=None, doc_format=None, files=None, extra_headers=None, style=None,
-                diagram_type=None):
+                smart_draw_format=None):
     """Create an async generation task."""
     log_info("Creating task...")
 
@@ -177,7 +177,7 @@ def create_task(api_key, operation, prompt, language=None, slide_count=None,
 
     # SmartDraw-specific parameters
     if operation == "smart_draw":
-        body["smart_draw_format"] = diagram_type or "drawio"
+        body["smart_draw_format"] = smart_draw_format or "drawio"
 
     # Process files
     if files:
@@ -557,7 +557,7 @@ Examples:
             files=args.files,
             extra_headers=extra_headers,
             style=args.style,
-            diagram_type=args.smart_draw_format
+            smart_draw_format=args.smart_draw_format
         )
         sys.exit(0 if task_id else 1)
 
@@ -587,7 +587,7 @@ Examples:
             doc_format=args.doc_format,
             files=args.files,
             style=args.style,
-            diagram_type=args.smart_draw_format
+            smart_draw_format=args.smart_draw_format
         )
         sys.exit(0 if success else 1)
 

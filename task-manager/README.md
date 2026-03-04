@@ -7,14 +7,14 @@ A Claude Code skill for generating AI content using AnyGen OpenAPI.
 ## Features
 
 | Operation | Description | File Download |
-|-----------|-------------|---------------|
+|-----------|-------------|--------------|
 | `slide` | Generate PPT/Slides | ✅ Yes (.pptx) |
 | `doc` | Generate Documents | ✅ Yes (.docx) |
 | `chat` | General AI conversation | ❌ Online only |
 | `storybook` | Create storyboards | ❌ Online only |
 | `data_analysis` | Data analysis | ❌ Online only |
 | `website` | Website development | ❌ Online only |
-| `smart_draw` | Diagram generation (Excalidraw/DrawIO) | ✅ Yes (.xml/.json → PNG) |
+| `smart_draw` | Diagram generation | ✅ Yes (.png) |
 
 ## Quick Start
 

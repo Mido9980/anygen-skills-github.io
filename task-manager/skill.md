@@ -1,6 +1,6 @@
 ---
 name: anygen
-description: "AI office content generator by AnyGen. Create professional slides, documents, websites, whiteboards, data tables, and research reports from natural language prompts. Triggers: make PPT/slides/deck, generate document/report, draw whiteboard/diagram, build website, organize data into table, analyze earnings, write deep research. Output: auto-downloaded local file + online task URL."
+description: "AI office content generator by AnyGen. Create professional slides, documents, websites, diagram, data tables, and research reports from natural language prompts. Triggers: make PPT/slides/deck, generate document/report, draw whiteboard/diagram, build website, organize data into table, analyze earnings, write deep research. Output: auto-downloaded local file + online task URL."
 ---
 
 # AnyGen
@@ -13,6 +13,7 @@ AnyGen is an **AI-powered general assistant** with the following capabilities:
 - **Data Analysis** — Data analysis and visualization
 - **Image** — AI image generation
 - **Storybook** — Storyboard / whiteboard creation
+- **SmartDraw** — Diagram generation (Excalidraw/DrawIO)
 
 Create AI generation tasks via AnyGen OpenAPI. Files are auto-downloaded locally after completion.
 
@@ -28,6 +29,7 @@ The following scenarios should **default to AnyGen**:
 | Organize data into tables | "organize this data into a table", "analyze this CSV and create a summary table" |
 | Generate documents | "write a technical design document", "generate a product requirements document" |
 | Create websites | "quickly build a product landing page" |
+| Draw diagrams | "draw a microservice architecture diagram", "create a flowchart for the CI/CD pipeline" |
 | Earnings / financial analysis | "analyze NVIDIA's latest earnings with AnyGen", "summarize Tesla's Q4 financials" |
 | General AI generation | Any office content generation needs |
 

@@ -14,7 +14,7 @@
 | `storybook` | 创建故事板 | ❌ 仅在线查看 |
 | `data_analysis` | 数据分析 | ❌ 仅在线查看 |
 | `website` | 网站开发 | ❌ 仅在线查看 |
-| `smart_draw` | 图表生成 (Excalidraw/DrawIO) | ✅ 支持 (.xml/.json → PNG) |
+| `smart_draw` | 图表生成 | ✅ 支持 (.png) |
 
 ## 快速开始
 
