@@ -12,7 +12,7 @@ AnyGen is an **AI-powered general assistant** with the following capabilities:
 - **Website** — Rapid web page creation
 - **Data Analysis** — Data analysis and visualization
 - **Image** — AI image generation
-- **Storybook** — Storyboard / whiteboard creation
+- **Storybook** — Storyboard style visuals creation
 - **SmartDraw** — Diagram generation (professional / hand-drawn style)
 
 ## When to use
@@ -182,9 +182,9 @@ Dependencies are auto-installed on first run. Only Node.js (v18+) is required.
 ### Step 6: Return results to user
 
 **IMPORTANT — what to tell the user:**
+- **Preview thumbnail** (`slide` / `doc` only) — from `[RESULT] Thumbnail:` line (auto-downloaded local file). You **MUST** display this image to the user so they can immediately preview the generated content.
 - **Local file path** — from `[RESULT] Local file:` line (for `smart_draw`, return the rendered PNG path)
 - **Task URL** — from `[RESULT] Task URL:` line, for online viewing/editing
-- **Preview thumbnail** (`slide` / `doc` only) — the task result includes a `thumbnail_url` field. You **MUST** first download the image from this URL to a local file, then display the downloaded image to the user so they can immediately preview the generated content.
 
 **Do NOT** return `file_url` to the user. The script auto-downloads the file.
 
