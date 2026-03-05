@@ -91,7 +91,7 @@ python3 scripts/anygen.py download \
 **Tell the user:**
 - **Local file path** — from `[RESULT] Local file:` line
 - **Task URL** — from `[RESULT] Task URL:` line, for online viewing/editing
-- **Preview thumbnail** — from `[RESULT] Thumbnail URL:` line. You **MUST** display this thumbnail to the user so they can immediately preview the generated document.
+- **Preview thumbnail** — from `[RESULT] Thumbnail URL:` line. You **MUST** first download the image from this URL to a local file, then display the downloaded image to the user so they can immediately preview the generated document.
 
 ## Advanced: IM File Delivery (MEDIA: Protocol)
 
