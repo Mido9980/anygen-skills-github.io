@@ -13,7 +13,7 @@ AnyGen is an **AI-powered general assistant** with the following capabilities:
 - **Data Analysis** — Data analysis and visualization
 - **Image** — AI image generation
 - **Storybook** — Storyboard / whiteboard creation
-- **SmartDraw** — Diagram generation (Excalidraw/DrawIO)
+- **SmartDraw** — Diagram generation (professional / hand-drawn style)
 
 ## When to use
 
@@ -66,7 +66,7 @@ Config file location: `~/.config/anygen/config.json`
 |-----------|-------------|---------------|
 | `slide` | Slides / PPT | Yes |
 | `doc` | Document / DOCX | Yes |
-| `smart_draw` | Diagram (DrawIO/Excalidraw) | Yes (requires render to PNG) |
+| `smart_draw` | Diagram (professional / hand-drawn style) | Yes (requires render to PNG) |
 | `chat` | General mode (SuperAgent) | No, task URL only |
 | `storybook` | Storybook / whiteboard | No, task URL only |
 | `data_analysis` | Data analysis | No, task URL only |
@@ -93,7 +93,7 @@ Before execution, **MUST ask the user**:
 **Optional:**
 - Reference files (PDF, PNG, JPG, DOCX, PPTX, TXT)
 - Language: zh-CN (default) or en-US
-- Document format: docx (default) or pdf
+- Export format: varies by operation (see parameter table)
 
 ### Step 2: Create task
 
@@ -118,7 +118,7 @@ Save the returned `task_id` for subsequent steps.
 | --slide-count | -c | Number of PPT pages | No |
 | --template | -t | PPT template | No |
 | --ratio | -r | 16:9 / 4:3 | No |
-| --export-format | -f | Export format (slide: pptx/image, doc: docx/image, smart_draw: drawio/excalidraw) | No |
+| --export-format | -f | Export format (slide: pptx/image, doc: docx/image, smart_draw: drawio(professional)/excalidraw(hand-drawn)) | No |
 | --file | | Attachment file path (repeatable) | No |
 | --style | -s | Style preference | No |
 
@@ -173,7 +173,7 @@ The downloaded file (.xml/.json) is a diagram source, NOT an image. You **MUST**
 
 ```bash
 bash ~/.openclaw/skills/anygen/anygen-suite/scripts/render-diagram.sh drawio ./output/diagram.xml ./output/diagram.png
-# Or for excalidraw:
+# Or for hand-drawn style (excalidraw):
 bash ~/.openclaw/skills/anygen/anygen-suite/scripts/render-diagram.sh excalidraw ./output/diagram.json ./output/diagram.png
 ```
 
@@ -220,8 +220,8 @@ Behavior:
 
 | Format | --export-format | Export File | Render Command |
 |--------|-----------------|-------------|----------------|
-| DrawIO (default) | `drawio` | `.xml` | `render-diagram.sh drawio input.xml output.png` |
-| Excalidraw | `excalidraw` | `.json` | `render-diagram.sh excalidraw input.json output.png` |
+| Professional (default) | `drawio` | `.xml` | `render-diagram.sh drawio input.xml output.png` |
+| Hand-drawn | `excalidraw` | `.json` | `render-diagram.sh excalidraw input.json output.png` |
 
 **render-diagram.sh options:** `--scale <n>` (default: 2), `--background <hex>` (default: #ffffff), `--padding <px>` (default: 20)
 
@@ -242,5 +242,5 @@ anygen-suite/
     ├── anygen.py              # Main script (AnyGen API client)
     ├── package.json           # Node.js dependencies (for diagram rendering)
     ├── render-diagram.sh      # Wrapper script (auto-install dependencies)
-    └── diagram-to-image.ts    # Diagram to PNG renderer (Excalidraw/DrawIO)
+    └── diagram-to-image.ts    # Diagram to PNG renderer
 ```

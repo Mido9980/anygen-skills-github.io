@@ -3,9 +3,9 @@ name: anygen-diagram
 description: "Generate architecture diagrams, whiteboard, flowcharts, and system diagrams with AnyGen. Create diagram drafts quickly and refine them in your preferred tool. Triggers: draw diagram, architecture diagram, flowchart, system diagram, whiteboard diagram, sequence diagram."
 ---
 
-# AnyGen AI Diagram Generator for Excalidraw / Draw.io style
+# AnyGen AI Diagram Generator
 
-Generate architecture diagrams, flowcharts, and system diagrams from natural language. Output: DrawIO (.xml) or Excalidraw (.json) source file, auto-rendered to PNG for preview.
+Generate architecture diagrams, flowcharts, and system diagrams from natural language. Supports professional style (clean, structured) and hand-drawn style (sketch-like, informal). Output: source file auto-rendered to PNG for preview.
 
 ## When to use
 
@@ -34,7 +34,7 @@ Generate architecture diagrams, flowcharts, and system diagrams from natural lan
 2. **Prompt** — What diagram to generate
 
 **Diagram-specific options:**
-- **Format** — `drawio` (default, exports .xml) or `excalidraw` (exports .json)
+- **Format** — `drawio` (default, professional style) or `excalidraw` (hand-drawn style)
 
 **Optional:**
 - Style preference via `--style`
@@ -55,7 +55,7 @@ python3 scripts/anygen.py create \
 |-----------|-------|-------------|
 | --operation | -o | **Must be `smart_draw`** |
 | --prompt | -p | Diagram description |
-| --export-format | -f | `drawio` (default) / `excalidraw` |
+| --export-format | -f | `drawio` (default, professional) / `excalidraw` (hand-drawn) |
 | --api-key | -k | API Key (omit if configured) |
 | --style | -s | Style preference |
 | --language | -l | zh-CN / en-US |
@@ -92,17 +92,17 @@ python3 scripts/anygen.py download \
 The downloaded file (.xml/.json) is a diagram source, **NOT an image**. You **MUST** render it to PNG:
 
 ```bash
-# For DrawIO:
+# For professional style (drawio):
 bash scripts/render-diagram.sh drawio ./output/diagram.xml ./output/diagram.png
 
-# For Excalidraw:
+# For hand-drawn style (excalidraw):
 bash scripts/render-diagram.sh excalidraw ./output/diagram.json ./output/diagram.png
 ```
 
 | Format | --export-format | Export File | Render Command |
 |--------|-----------------|-------------|----------------|
-| DrawIO (default) | `drawio` | `.xml` | `render-diagram.sh drawio input.xml output.png` |
-| Excalidraw | `excalidraw` | `.json` | `render-diagram.sh excalidraw input.json output.png` |
+| Professional (default) | `drawio` | `.xml` | `render-diagram.sh drawio input.xml output.png` |
+| Hand-drawn | `excalidraw` | `.json` | `render-diagram.sh excalidraw input.json output.png` |
 
 **Options:** `--scale <n>` (default: 2), `--background <hex>` (default: #ffffff), `--padding <px>` (default: 20)
 
@@ -110,7 +110,7 @@ bash scripts/render-diagram.sh excalidraw ./output/diagram.json ./output/diagram
 
 **Tell the user:**
 - **Rendered PNG path** — the output from render step
-- **Source file path** — the .xml/.json for editing in Draw.io/Excalidraw
+- **Source file path** — the .xml/.json source file for further editing
 - **Task URL** — from `[RESULT] Task URL:` line
 
 ## Error Handling
