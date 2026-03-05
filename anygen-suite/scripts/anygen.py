@@ -469,7 +469,7 @@ Examples:
     create_parser.add_argument("--slide-count", "-c", type=int, help="Number of slides")
     create_parser.add_argument("--template", "-t", help="Slide template")
     create_parser.add_argument("--ratio", "-r", choices=["16:9", "4:3"], help="Slide ratio")
-    create_parser.add_argument("--export-format", "-f", help="Export format (slide: pptx/image, doc: docx/image, smart_draw: drawio/excalidraw)")
+    create_parser.add_argument("--export-format", "-f", help="Export format (slide: pptx/image, doc: docx/image, smart_draw: drawio(professional)/excalidraw(hand-drawn))")
     create_parser.add_argument("--file", action="append", dest="files", help="Attachment file path (can be used multiple times)")
     create_parser.add_argument("--style", "-s", help="Style preference (e.g., 'business formal', 'minimalist modern', 'tech')")
 

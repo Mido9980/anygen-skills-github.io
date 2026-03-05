@@ -13,7 +13,7 @@ Generate various content using AnyGen API:
 - **Websites** — Landing pages, portfolios
 - **Storybooks** — Visual narratives
 - **Data Analysis** — Charts and insights
-- **SmartDraw** — Diagrams (Excalidraw/DrawIO)
+- **SmartDraw** — Diagrams (professional / hand-drawn style)
 
 ### 📈 Finance Report
 Professional equity research PDF reports:
