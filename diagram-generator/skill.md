@@ -7,11 +7,16 @@ env:
 permissions:
   network:
     - "https://www.anygen.io"
+    - "https://esm.sh"
+    - "https://viewer.diagrams.net"
+    - "https://registry.npmjs.org"
+    - "https://storage.googleapis.com"
   filesystem:
     read:
       - "~/.config/anygen/config.json"
     write:
       - "~/.config/anygen/config.json"
+      - "<skill_dir>/scripts/node_modules/"
 ---
 
 # AnyGen AI Diagram Generator
@@ -32,15 +37,18 @@ Generate architecture diagrams, flowcharts, and system diagrams from natural lan
 
 **What this skill does:**
 - Sends task prompts and parameters to the AnyGen API at `www.anygen.io`
-- Downloads diagram source files and renders them to PNG locally
-- Installs Chromium automatically on first diagram render (via Puppeteer)
+- Uploads user-provided reference files (via `--file`) to `www.anygen.io` for processing
+- Downloads diagram source files (.xml/.json) and renders them to PNG locally
+- Fetches Excalidraw renderer from `esm.sh` and Draw.io viewer from `viewer.diagrams.net`
+- Auto-installs npm dependencies and Chromium on first diagram render (via Puppeteer)
 - Reads/writes API key config at `~/.config/anygen/config.json`
 
 **What this skill does NOT do:**
-- Does not upload local files to any server
 - Does not send your API key to any endpoint other than `www.anygen.io`
-- Does not modify system configuration beyond `~/.config/anygen/config.json`
-- Does not run background processes
+- Does not modify system configuration beyond `~/.config/anygen/config.json` and `scripts/node_modules/` within the skill directory
+- Does not run persistent background processes
+
+**Auto-install behavior:** On first render, `render-diagram.sh` runs `npm install` to fetch Puppeteer and downloads Chromium (~200MB). This requires network access to `registry.npmjs.org` and `storage.googleapis.com`.
 
 **Bundled scripts:** `scripts/anygen.py` (Python — uses `requests`), `scripts/render-diagram.sh` (Bash), `scripts/diagram-to-image.ts` (TypeScript — uses Puppeteer)
 
@@ -101,7 +109,7 @@ python3 scripts/anygen.py status \
 
 **Progress reporting rules — you MUST follow:**
 
-1. Call `status` every **10 seconds** to poll internally
+1. Call `status` every **3 seconds** to poll internally (default POLL_INTERVAL)
 2. Only notify the user at **milestone progress points**: 25%, 50%, 75%, 90%, and completion
 3. Example user-facing messages at milestones:
    - 25% → "AnyGen is analyzing diagram structure..."
