@@ -1,11 +1,16 @@
 ---
 name: anygen-financial-research
-description: "Accelerate financial research with AnyGen: summarize earnings releases and transcripts, extract key KPIs from Nasdaq-listed companies, and draft internal research memos using publicly available market data from sources like Bloomberg, Yahoo Finance, and company filings. Not investment advice. Triggers: analyze earnings, financial summary, earnings report, company financials, KPI extraction."
-data:
-  config_read: "~/.config/anygen/config.json"
-  config_write: "~/.config/anygen/config.json"
-  env_vars: ["ANYGEN_API_KEY"]
-  network: "https://www.anygen.io (AnyGen OpenAPI)"
+description: "Accelerate financial research with AnyGen: summarize earnings releases and transcripts, extract key KPIs from Nasdaq-listed companies, and draft internal research memos using publicly available market data from sources like Bloomberg, Yahoo Finance, and company filings. Not investment advice. Triggers: analyze earnings, financial summary, earnings report, company financials, KPI extraction. Requires ANYGEN_API_KEY env var or ~/.config/anygen/config.json."
+env:
+  - ANYGEN_API_KEY
+permissions:
+  network:
+    - "https://www.anygen.io"
+  filesystem:
+    read:
+      - "~/.config/anygen/config.json"
+    write:
+      - "~/.config/anygen/config.json"
 ---
 
 # AnyGen Financial Research Assistant
@@ -22,6 +27,15 @@ Summarize earnings releases and transcripts, extract key KPIs from Nasdaq-listed
 | Financial summary | "summarize Tesla's Q4 financials" |
 | KPI extraction | "extract key KPIs from Apple's latest earnings report" |
 | Research memo | "draft a research memo on Microsoft's cloud revenue growth" |
+
+
+## Privacy & Security
+
+This skill performs the following sensitive operations:
+
+- **Credentials**: Requires an AnyGen API Key (`ANYGEN_API_KEY` env var or `~/.config/anygen/config.json`). The config file is read/written by the bundled `scripts/anygen.py` script.
+- **Network access**: All API calls go to `https://www.anygen.io`. The bundled Python script (`scripts/anygen.py`) performs HTTP requests using the `requests` library.
+- **Local filesystem writes**: Downloaded files are saved to the specified output directory.
 
 ## Prerequisites
 

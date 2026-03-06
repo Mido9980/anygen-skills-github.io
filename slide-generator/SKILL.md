@@ -1,13 +1,19 @@
 ---
 name: anygen-slide
-description: "Generate professional slide presentations with AnyGen AI. Uses dialogue mode to understand audience, purpose, and content before generating. Background-polls progress and auto-delivers the downloaded PPTX file without blocking the conversation."
+description: "Generate professional slide presentations with AnyGen AI. Requires ANYGEN_API_KEY env var or ~/.config/anygen/config.json. Uploads user-provided reference files to AnyGen server with user consent. Spawns background poll process (up to 20 min) to auto-download results."
 requires:
   - sessions_spawn
-data:
-  config_read: "~/.config/anygen/config.json"
-  config_write: "~/.config/anygen/config.json"
-  env_vars: ["ANYGEN_API_KEY"]
-  network: "https://www.anygen.io (AnyGen OpenAPI)"
+env:
+  - ANYGEN_API_KEY
+permissions:
+  network:
+    - "https://www.anygen.io"
+  filesystem:
+    read:
+      - "~/.config/anygen/config.json"
+    write:
+      - "~/.config/anygen/config.json"
+      - "~/.openclaw/workspace/"
 ---
 
 # AI Slide Generator - AnyGen
@@ -18,6 +24,16 @@ Create professional slide presentations using AnyGen OpenAPI.
 
 - User needs to create PPT/Slides/Presentations
 - User has files to upload as reference material for slide generation
+
+## Privacy & Security
+
+This skill performs the following sensitive operations — users should be aware of these behaviors:
+
+- **Credentials**: Requires an AnyGen API Key (`ANYGEN_API_KEY` env var or `~/.config/anygen/config.json`). The config file is read/written by the bundled `scripts/anygen.py` script.
+- **Network access**: All API calls go to `https://www.anygen.io`. The bundled Python script (`scripts/anygen.py`) performs HTTP requests using the `requests` library.
+- **File uploads**: When the user provides reference files, the agent will upload them to AnyGen's server after obtaining user consent. Users are informed before any file is transmitted.
+- **Background processes**: After task creation, a background poll process runs for up to 20 minutes to monitor progress and auto-download results. This extends network activity beyond the immediate conversation.
+- **Local filesystem writes**: Downloaded files are saved to the output directory or `~/.openclaw/workspace/`.
 
 ## Prerequisites
 

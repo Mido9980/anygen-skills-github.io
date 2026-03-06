@@ -1,11 +1,16 @@
 ---
 name: anygen-website
-description: "Build a landing page or simple website with AnyGen from a prompt. Generate sections, copy, and basic layout quickly for faster iteration. Triggers: build website, landing page, create webpage, web page, simple site."
-data:
-  config_read: "~/.config/anygen/config.json"
-  config_write: "~/.config/anygen/config.json"
-  env_vars: ["ANYGEN_API_KEY"]
-  network: "https://www.anygen.io (AnyGen OpenAPI)"
+description: "Build a landing page or simple website with AnyGen from a prompt. Generate sections, copy, and basic layout quickly for faster iteration. Triggers: build website, landing page, create webpage, web page, simple site. Requires ANYGEN_API_KEY env var or ~/.config/anygen/config.json."
+env:
+  - ANYGEN_API_KEY
+permissions:
+  network:
+    - "https://www.anygen.io"
+  filesystem:
+    read:
+      - "~/.config/anygen/config.json"
+    write:
+      - "~/.config/anygen/config.json"
 ---
 
 # AnyGen AI Website Generator
@@ -20,6 +25,15 @@ Build a landing page or simple website from a natural language prompt. Output: o
 | Portfolio site | "create a personal portfolio website" |
 | Event page | "make an event registration page" |
 | Product page | "build a SaaS product homepage" |
+
+
+## Privacy & Security
+
+This skill performs the following sensitive operations:
+
+- **Credentials**: Requires an AnyGen API Key (`ANYGEN_API_KEY` env var or `~/.config/anygen/config.json`). The config file is read/written by the bundled `scripts/anygen.py` script.
+- **Network access**: All API calls go to `https://www.anygen.io`. The bundled Python script (`scripts/anygen.py`) performs HTTP requests using the `requests` library.
+- **Local filesystem writes**: Downloaded files are saved to the specified output directory.
 
 ## Prerequisites
 

@@ -1,11 +1,16 @@
 ---
 name: anygen-doc
-description: "Generate structured documents with AnyGen: specs, proposals, and summaries. Export in DOCX or PDF format with clean formatting and headings. Triggers: write document, generate doc, create spec, write proposal, technical document, requirements document."
-data:
-  config_read: "~/.config/anygen/config.json"
-  config_write: "~/.config/anygen/config.json"
-  env_vars: ["ANYGEN_API_KEY"]
-  network: "https://www.anygen.io (AnyGen OpenAPI)"
+description: "Generate structured documents with AnyGen: specs, proposals, and summaries. Export in DOCX or PDF format with clean formatting and headings. Triggers: write document, generate doc, create spec, write proposal, technical document, requirements document. Requires ANYGEN_API_KEY env var or ~/.config/anygen/config.json."
+env:
+  - ANYGEN_API_KEY
+permissions:
+  network:
+    - "https://www.anygen.io"
+  filesystem:
+    read:
+      - "~/.config/anygen/config.json"
+    write:
+      - "~/.config/anygen/config.json"
 ---
 
 # AI Document Generator - AnyGen
@@ -20,6 +25,15 @@ Generate structured documents from natural language prompts. Supports DOCX and P
 | Product requirements | "generate a product requirements document" |
 | Proposal | "write a project proposal for the new dashboard" |
 | Summary | "create an executive summary of the Q4 results" |
+
+
+## Privacy & Security
+
+This skill performs the following sensitive operations:
+
+- **Credentials**: Requires an AnyGen API Key (`ANYGEN_API_KEY` env var or `~/.config/anygen/config.json`). The config file is read/written by the bundled `scripts/anygen.py` script.
+- **Network access**: All API calls go to `https://www.anygen.io`. The bundled Python script (`scripts/anygen.py`) performs HTTP requests using the `requests` library.
+- **Local filesystem writes**: Downloaded files are saved to the specified output directory.
 
 ## Prerequisites
 

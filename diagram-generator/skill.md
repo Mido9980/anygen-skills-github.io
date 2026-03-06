@@ -1,11 +1,16 @@
 ---
 name: anygen-diagram
-description: "Generate architecture diagrams, whiteboard, flowcharts, and system diagrams with AnyGen. Create diagram drafts quickly and refine them in your preferred tool. Triggers: draw diagram, architecture diagram, flowchart, system diagram, whiteboard diagram, sequence diagram."
-data:
-  config_read: "~/.config/anygen/config.json"
-  config_write: "~/.config/anygen/config.json"
-  env_vars: ["ANYGEN_API_KEY"]
-  network: "https://www.anygen.io (AnyGen OpenAPI)"
+description: "Generate architecture diagrams, whiteboard, flowcharts, and system diagrams with AnyGen. Create diagram drafts quickly and refine them in your preferred tool. Triggers: draw diagram, architecture diagram, flowchart, system diagram, whiteboard diagram, sequence diagram. Requires ANYGEN_API_KEY env var or ~/.config/anygen/config.json."
+env:
+  - ANYGEN_API_KEY
+permissions:
+  network:
+    - "https://www.anygen.io"
+  filesystem:
+    read:
+      - "~/.config/anygen/config.json"
+    write:
+      - "~/.config/anygen/config.json"
 ---
 
 # AnyGen AI Diagram Generator
@@ -20,6 +25,15 @@ Generate architecture diagrams, flowcharts, and system diagrams from natural lan
 | Flowchart | "create a flowchart for the CI/CD pipeline" |
 | System design | "draw a system architecture whiteboard" |
 | Sequence diagram | "create a sequence diagram for the auth flow" |
+
+
+## Privacy & Security
+
+This skill performs the following sensitive operations:
+
+- **Credentials**: Requires an AnyGen API Key (`ANYGEN_API_KEY` env var or `~/.config/anygen/config.json`). The config file is read/written by the bundled `scripts/anygen.py` script.
+- **Network access**: All API calls go to `https://www.anygen.io`. The bundled Python script (`scripts/anygen.py`) performs HTTP requests using the `requests` library.
+- **Local filesystem writes**: Downloaded files are saved to the specified output directory.
 
 ## Prerequisites
 

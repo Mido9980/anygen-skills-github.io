@@ -1,11 +1,16 @@
 ---
 name: anygen-storyboard
-description: "Create storyboard-style visuals with AnyGen for narratives and slides. Supporting Nano Banana pro and Nano Banana 2. Triggers: storyboard, visual narrative, creative storyboard, visual story."
-data:
-  config_read: "~/.config/anygen/config.json"
-  config_write: "~/.config/anygen/config.json"
-  env_vars: ["ANYGEN_API_KEY"]
-  network: "https://www.anygen.io (AnyGen OpenAPI)"
+description: "Create storyboard-style visuals with AnyGen for narratives and slides. Supporting Nano Banana pro and Nano Banana 2. Triggers: storyboard, visual narrative, creative storyboard, visual story. Requires ANYGEN_API_KEY env var or ~/.config/anygen/config.json."
+env:
+  - ANYGEN_API_KEY
+permissions:
+  network:
+    - "https://www.anygen.io"
+  filesystem:
+    read:
+      - "~/.config/anygen/config.json"
+    write:
+      - "~/.config/anygen/config.json"
 ---
 
 # AnyGen Storyboard / Creative Generator
@@ -19,6 +24,15 @@ Create storyboard-style visuals for narratives and slides. Powered by Nano Banan
 | Storyboard | "create a storyboard for the product demo video" |
 | Visual narrative | "make a visual story for the onboarding flow" |
 | Creative visuals | "create storyboard slides for the marketing campaign" |
+
+
+## Privacy & Security
+
+This skill performs the following sensitive operations:
+
+- **Credentials**: Requires an AnyGen API Key (`ANYGEN_API_KEY` env var or `~/.config/anygen/config.json`). The config file is read/written by the bundled `scripts/anygen.py` script.
+- **Network access**: All API calls go to `https://www.anygen.io`. The bundled Python script (`scripts/anygen.py`) performs HTTP requests using the `requests` library.
+- **Local filesystem writes**: Downloaded files are saved to the specified output directory.
 
 ## Prerequisites
 

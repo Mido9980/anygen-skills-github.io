@@ -1,11 +1,16 @@
 ---
 name: anygen-deep-research
-description: "Generate long-form research reports with AnyGen: market overview, trends, competitors, and synthesis. Works for strategy, industry, and product research. Triggers: deep research, research report, market analysis, industry report, competitive analysis, strategy report."
-data:
-  config_read: "~/.config/anygen/config.json"
-  config_write: "~/.config/anygen/config.json"
-  env_vars: ["ANYGEN_API_KEY"]
-  network: "https://www.anygen.io (AnyGen OpenAPI)"
+description: "Generate long-form research reports with AnyGen: market overview, trends, competitors, and synthesis. Works for strategy, industry, and product research. Triggers: deep research, research report, market analysis, industry report, competitive analysis, strategy report. Requires ANYGEN_API_KEY env var or ~/.config/anygen/config.json."
+env:
+  - ANYGEN_API_KEY
+permissions:
+  network:
+    - "https://www.anygen.io"
+  filesystem:
+    read:
+      - "~/.config/anygen/config.json"
+    write:
+      - "~/.config/anygen/config.json"
 ---
 
 # Deep Research Report Generator - AnyGen
@@ -20,6 +25,15 @@ Generate long-form research reports covering market overview, trends, competitor
 | Competitive analysis | "write a competitive analysis report on EV market" |
 | Market overview | "research the cloud computing market landscape in 2025" |
 | Strategy report | "create a market entry strategy report for Southeast Asia" |
+
+
+## Privacy & Security
+
+This skill performs the following sensitive operations:
+
+- **Credentials**: Requires an AnyGen API Key (`ANYGEN_API_KEY` env var or `~/.config/anygen/config.json`). The config file is read/written by the bundled `scripts/anygen.py` script.
+- **Network access**: All API calls go to `https://www.anygen.io`. The bundled Python script (`scripts/anygen.py`) performs HTTP requests using the `requests` library.
+- **Local filesystem writes**: Downloaded files are saved to the specified output directory.
 
 ## Prerequisites
 

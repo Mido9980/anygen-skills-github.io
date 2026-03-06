@@ -1,11 +1,16 @@
 ---
 name: anygen-data-analysis
-description: "Analyze CSV data with AnyGen: clean tables, summaries, and insights. Generate charts and a written explanation for reporting workflows. Triggers: analyze data, analyze CSV, data table, organize data, data summary, chart from data."
-data:
-  config_read: "~/.config/anygen/config.json"
-  config_write: "~/.config/anygen/config.json"
-  env_vars: ["ANYGEN_API_KEY"]
-  network: "https://www.anygen.io (AnyGen OpenAPI)"
+description: "Analyze CSV data with AnyGen: clean tables, summaries, and insights. Generate charts and a written explanation for reporting workflows. Triggers: analyze data, analyze CSV, data table, organize data, data summary, chart from data. Requires ANYGEN_API_KEY env var or ~/.config/anygen/config.json."
+env:
+  - ANYGEN_API_KEY
+permissions:
+  network:
+    - "https://www.anygen.io"
+  filesystem:
+    read:
+      - "~/.config/anygen/config.json"
+    write:
+      - "~/.config/anygen/config.json"
 ---
 
 # AnyGen Data Analysis (CSV)
@@ -20,6 +25,15 @@ Analyze CSV data with AnyGen: generate clean tables, summaries, charts, and insi
 | Data organization | "organize this data into a table" |
 | Chart generation | "create charts from this sales data" |
 | Data summary | "summarize the key trends in this dataset" |
+
+
+## Privacy & Security
+
+This skill performs the following sensitive operations:
+
+- **Credentials**: Requires an AnyGen API Key (`ANYGEN_API_KEY` env var or `~/.config/anygen/config.json`). The config file is read/written by the bundled `scripts/anygen.py` script.
+- **Network access**: All API calls go to `https://www.anygen.io`. The bundled Python script (`scripts/anygen.py`) performs HTTP requests using the `requests` library.
+- **Local filesystem writes**: Downloaded files are saved to the specified output directory.
 
 ## Prerequisites
 
