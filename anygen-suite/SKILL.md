@@ -190,7 +190,7 @@ python3 scripts/anygen.py create \
 | --slide-count | -c | Number of PPT pages | No |
 | --template | -t | PPT template | No |
 | --ratio | -r | 16:9 / 4:3 | No |
-| --export-format | -f | Export format (slide: pptx/image, doc: docx/image, smart_draw: drawio/excalidraw) | No |
+| --export-format | -f | Export format (slide: pptx/image/thumbnail, doc: docx/image/thumbnail, smart_draw: drawio/excalidraw) | No |
 | --file | | Attachment file path (repeatable) | No |
 | --file-token | | File token from upload (repeatable) | No |
 | --style | -s | Style preference | No |

@@ -243,7 +243,7 @@ python3 scripts/anygen.py create --operation doc --prompt "..." [options]
 | --operation | -o | **Must be `doc`** |
 | --prompt | -p | Content description |
 | --file-token | | File token from upload (repeatable) |
-| --export-format | -f | `docx` (default) / `image` |
+| --export-format | -f | `docx` (default) / `image` / `thumbnail` |
 | --language | -l | Language (zh-CN / en-US) |
 | --style | -s | Style preference |
 
