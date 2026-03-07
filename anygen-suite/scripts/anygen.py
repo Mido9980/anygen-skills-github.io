@@ -689,8 +689,11 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Quick mode: create a slide task directly
+  # Create tasks for different operation types
   python3 anygen.py create -o slide -p "A presentation about AI history"
+  python3 anygen.py create -o doc -p "Technical design document"
+  python3 anygen.py create -o smart_draw -p "System architecture diagram"
+  python3 anygen.py create -o website -p "Product landing page"
 
   # Dialogue mode: analyze requirements first
   python3 anygen.py prepare --message "I need a slide about our Q4 results"
@@ -700,6 +703,9 @@ Examples:
 
   # Create task with uploaded file tokens
   python3 anygen.py create -o slide -p "Summarize this report" --file-token tk_xxx
+
+  # Check task status (non-blocking)
+  python3 anygen.py status --task-id task_xxx
 
   # Full workflow: create -> poll -> download
   python3 anygen.py run -o slide -p "AI presentation" --output ./

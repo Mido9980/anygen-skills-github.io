@@ -3,13 +3,13 @@
 AnyGen OpenAPI Client
 
 Usage:
-    python3 anygen.py create --api-key sk-xxx --operation slide --prompt "..."
+    python3 anygen.py create --api-key sk-xxx --operation storybook --prompt "..."
     python3 anygen.py poll --api-key sk-xxx --task-id task_xxx
     python3 anygen.py thumbnail --api-key sk-xxx --task-id task_xxx --output /tmp/
     python3 anygen.py download --api-key sk-xxx --task-id task_xxx --output ./
-    python3 anygen.py run --api-key sk-xxx --operation slide --prompt "..." --output ./
+    python3 anygen.py run --api-key sk-xxx --operation storybook --prompt "..." --output ./
     python3 anygen.py upload --api-key sk-xxx --file ./document.pdf
-    python3 anygen.py prepare --api-key sk-xxx --message "I need a slide about AI"
+    python3 anygen.py prepare --api-key sk-xxx --message "I need a storybook about space adventure"
 """
 
 import argparse
@@ -643,20 +643,20 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Quick mode: create a slide task directly
-  python3 anygen.py create -o slide -p "A presentation about AI history"
+  # Quick mode: create a storybook task directly
+  python3 anygen.py create -o storybook -p "A storybook about space adventure"
 
   # Dialogue mode: analyze requirements first
-  python3 anygen.py prepare --message "I need a slide about our Q4 results"
+  python3 anygen.py prepare --message "I need a storybook about ocean exploration"
 
   # Upload a file for use in tasks
-  python3 anygen.py upload --file ./data.pdf
+  python3 anygen.py upload --file ./reference.pdf
 
   # Create task with uploaded file tokens
-  python3 anygen.py create -o slide -p "Summarize this report" --file-token tk_xxx
+  python3 anygen.py create -o storybook -p "Create a storybook from this story" --file-token tk_xxx
 
   # Full workflow: create -> poll -> download
-  python3 anygen.py run -o slide -p "AI presentation" --output ./
+  python3 anygen.py run -o storybook -p "Children's storybook about dinosaurs" --output ./
         """
     )
 
@@ -693,7 +693,7 @@ Examples:
     create_parser = subparsers.add_parser("create", help="Create a generation task")
     add_common_args(create_parser)
     create_parser.add_argument("--operation", "-o", required=True,
-                               choices=["chat", "slide", "doc", "storybook", "data_analysis", "website"],
+                               choices=["chat", "slide", "doc", "storybook", "data_analysis", "website", "smart_draw"],
                                help="Operation type")
     create_parser.add_argument("--prompt", "-p", required=True, help="Content prompt")
     create_parser.add_argument("--language", "-l", help="Language (zh-CN, en-US)")
@@ -731,7 +731,7 @@ Examples:
     run_parser = subparsers.add_parser("run", help="Full workflow: create -> poll -> download")
     add_common_args(run_parser)
     run_parser.add_argument("--operation", "-o", required=True,
-                           choices=["chat", "slide", "doc", "storybook", "data_analysis", "website"],
+                           choices=["chat", "slide", "doc", "storybook", "data_analysis", "website", "smart_draw"],
                            help="Operation type")
     run_parser.add_argument("--prompt", "-p", required=True, help="Content prompt")
     run_parser.add_argument("--language", "-l", help="Language (zh-CN, en-US)")
