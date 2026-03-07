@@ -693,14 +693,14 @@ Examples:
     create_parser = subparsers.add_parser("create", help="Create a generation task")
     add_common_args(create_parser)
     create_parser.add_argument("--operation", "-o", required=True,
-                               choices=["chat", "slide", "doc", "storybook", "data_analysis", "website"],
+                               choices=["chat", "slide", "doc", "storybook", "data_analysis", "website", "smart_draw"],
                                help="Operation type")
     create_parser.add_argument("--prompt", "-p", required=True, help="Content prompt")
     create_parser.add_argument("--language", "-l", help="Language (zh-CN, en-US)")
     create_parser.add_argument("--slide-count", "-c", type=int, help="Number of slides")
     create_parser.add_argument("--template", "-t", help="Slide template")
     create_parser.add_argument("--ratio", "-r", choices=["16:9", "4:3"], help="Slide ratio")
-    create_parser.add_argument("--export-format", "-f", help="Export format (slide: pptx/image, doc: docx/image)")
+    create_parser.add_argument("--export-format", "-f", help="Export format (slide: pptx/image/thumbnail, doc: docx/image/thumbnail, smart_draw: drawio/excalidraw)")
     create_parser.add_argument("--file", action="append", dest="files",
                                help="Attachment file path (legacy base64, can be repeated)")
     create_parser.add_argument("--file-token", action="append", dest="file_tokens",
@@ -731,14 +731,14 @@ Examples:
     run_parser = subparsers.add_parser("run", help="Full workflow: create -> poll -> download")
     add_common_args(run_parser)
     run_parser.add_argument("--operation", "-o", required=True,
-                           choices=["chat", "slide", "doc", "storybook", "data_analysis", "website"],
+                           choices=["chat", "slide", "doc", "storybook", "data_analysis", "website", "smart_draw"],
                            help="Operation type")
     run_parser.add_argument("--prompt", "-p", required=True, help="Content prompt")
     run_parser.add_argument("--language", "-l", help="Language (zh-CN, en-US)")
     run_parser.add_argument("--slide-count", "-c", type=int, help="Number of slides")
     run_parser.add_argument("--template", "-t", help="Slide template")
     run_parser.add_argument("--ratio", "-r", choices=["16:9", "4:3"], help="Slide ratio")
-    run_parser.add_argument("--export-format", "-f", help="Export format (slide: pptx/image, doc: docx/image)")
+    run_parser.add_argument("--export-format", "-f", help="Export format (slide: pptx/image/thumbnail, doc: docx/image/thumbnail, smart_draw: drawio/excalidraw)")
     run_parser.add_argument("--file", action="append", dest="files",
                            help="Attachment file path (legacy base64)")
     run_parser.add_argument("--file-token", action="append", dest="file_tokens",
