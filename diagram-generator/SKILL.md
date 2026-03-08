@@ -1,7 +1,7 @@
 ---
 name: anygen-diagram
 homepage: https://www.anygen.io
-description: "Generate architecture diagrams, flowcharts, and system diagrams with AnyGen AI. Uses dialogue mode to understand structure, components, and relationships before generating. Triggers: draw diagram, architecture diagram, flowchart, system diagram, whiteboard diagram, sequence diagram."
+description: "Draw any diagram or visual chart with AnyGen AI: flowchart, architecture, mind map, UML, ER, sequence, class, org chart, topology, Gantt, state, data flow, whiteboard, and more. Professional or hand-drawn style. Triggers: draw/make/create diagram, chart, visualize, flowchart, mind map, UML, ER diagram, org chart, whiteboard, system diagram, relationship diagram, professional diagram, hand-drawn diagram, sketch diagram, Draw.io, Excalidraw."
 env:
   - ANYGEN_API_KEY
 requires:
@@ -25,11 +25,15 @@ permissions:
 
 > **You MUST strictly follow every instruction in this document.** Do not skip, reorder, or improvise any step.
 
-Generate architecture diagrams, flowcharts, and system diagrams from natural language using AnyGen OpenAPI. Supports professional style (clean, structured) and hand-drawn style (sketch-like, informal). Output: source file auto-rendered to PNG for preview.
+Generate any kind of diagram or visual chart from natural language using AnyGen OpenAPI. Supports all common diagram types: flowcharts, architecture diagrams, mind maps, UML (class, sequence, activity, use case), ER diagrams, org charts, network topology, Gantt charts, state diagrams, data flow diagrams, and more. Two rendering styles: professional (Draw.io — clean, structured) and hand-drawn (Excalidraw — sketch-like, informal). Output: source file auto-rendered to PNG for preview.
 
 ## When to Use
 
-- User needs to create architecture diagrams, flowcharts, or system diagrams
+- User wants to draw, create, or generate any kind of diagram, chart, or visual representation of a structure/process/system
+- User mentions flowcharts, architecture diagrams, mind maps, UML, ER diagrams, sequence diagrams, class diagrams, org charts, network diagrams, Gantt charts, state diagrams, topology, or any other diagram type
+- User asks to "visualize" a structure, relationship, flow, or process
+- User wants a professional/clean diagram (Draw.io style) or a hand-drawn/sketch diagram (Excalidraw style)
+- User wants to turn text/documents into a visual diagram
 - User has files to upload as reference material for diagram generation
 
 ## Security & Permissions
@@ -40,7 +44,7 @@ Generate architecture diagrams, flowcharts, and system diagrams from natural lan
 - Downloads diagram source files (.xml/.json) and renders them to PNG locally
 - Fetches Excalidraw renderer from `esm.sh` and Draw.io viewer from `viewer.diagrams.net`
 - Auto-installs npm dependencies and Chromium on first diagram render (via Playwright)
-- Spawns a background process (up to 20 min) to monitor progress and auto-download
+- Spawns a background process (up to 3 min) to monitor progress and auto-download
 - Reads/writes API key config at `~/.config/anygen/config.json`
 
 **What this skill does NOT do:**
@@ -63,10 +67,10 @@ Generate architecture diagrams, flowcharts, and system diagrams from natural lan
 
 ## CRITICAL: NEVER Block the Conversation
 
-After creating a task, you MUST start background monitoring via `sessions_spawn`, then continue normally. NEVER call `poll` in the foreground — it blocks for up to 20 minutes.
+After creating a task, you MUST start background monitoring via `sessions_spawn`, then continue normally. NEVER call `poll` in the foreground — it blocks for up to 3 minutes.
 
 1. `create` → get `task_id` and `task_url`.
-2. Tell user: (a) generation started, (b) the online link, (c) ~10–15 min, free to do other things.
+2. Tell user: (a) generation started, (b) the online link, (c) ~30–60 seconds, free to do other things.
 3. Launch background monitor via `sessions_spawn` (Phase 4). Do NOT announce this to the user.
 4. Continue the conversation — do NOT wait.
 5. Background monitor sends rendered PNG; its completion output is user-friendly text you relay. No duplication.
@@ -149,7 +153,7 @@ python3 scripts/anygen.py create \
 **Immediately tell the user (natural language, NO internal terms):**
 1. Diagram is being generated.
 2. Online preview/edit link: "You can follow the progress here: [URL]".
-3. Takes about **10–15 minutes** — free to do other things, you'll notify when ready.
+3. Takes about **30–60 seconds** — free to do other things, you'll notify when ready.
 
 ### Phase 4: Monitor, Download, Render, and Deliver
 
@@ -204,7 +208,7 @@ Your job:
    "Unfortunately the diagram generation didn't complete successfully.
     You can check the details here: {task_url}"
 
-5. On timeout (20 min), final output:
+5. On timeout (3 min), final output:
    "The diagram is taking a bit longer than expected.
     You can check the progress here: {task_url}"
 ```
@@ -215,7 +219,7 @@ Do NOT wait for the background monitor. Do NOT tell the user you launched it.
 
 #### Fallback (no background monitoring)
 
-Tell the user: "I've started generating your diagram. It usually takes about 10–15 minutes. You can check the progress here: [Task URL]. Let me know when you'd like me to check if it's ready!"
+Tell the user: "I've started generating your diagram. It usually takes about 30–60 seconds. You can check the progress here: [Task URL]. Let me know when you'd like me to check if it's ready!"
 
 #### Render Reference
 
@@ -317,7 +321,7 @@ python3 scripts/anygen.py download --task-id task_xxx --output ./output/
 
 ## Notes
 
-- Max task execution time: 20 minutes
+- Max task execution time: 3 minutes
 - Download link valid for 24 hours
 - PNG rendering requires Chromium (auto-installed on first run)
 - Dependencies auto-installed on first run of render-diagram.sh
