@@ -30,7 +30,7 @@ except ImportError:
 
 API_BASE = "https://www.anygen.io"
 POLL_INTERVAL = 3  # seconds
-MAX_POLL_TIME = 1200  # 20 minutes
+MAX_POLL_TIME = 180  # 3 minutes
 OPENCLAW_WORKSPACE = Path.home() / ".openclaw" / "workspace"
 CONFIG_DIR = Path.home() / ".config" / "anygen"
 CONFIG_FILE = CONFIG_DIR / "config.json"
