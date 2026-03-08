@@ -14,13 +14,14 @@ permissions:
       - "~/.config/anygen/config.json"
     write:
       - "~/.config/anygen/config.json"
+      - "~/.openclaw/workspace/"
 ---
 
 # AnyGen Storybook / Creative Generator
 
 > **You MUST strictly follow every instruction in this document.** Do not skip, reorder, or improvise any step.
 
-Create storybook-style visuals for narratives and slides using AnyGen OpenAPI. Powered by Nano Banana pro and Nano Banana 2. Output: online task URL for viewing.
+Create storybook-style visuals for narratives and slides using AnyGen OpenAPI. Powered by Nano Banana pro and Nano Banana 2. Output: thumbnail preview + online task URL, with file download on request.
 
 ## When to Use
 
@@ -32,6 +33,8 @@ Create storybook-style visuals for narratives and slides using AnyGen OpenAPI. P
 **What this skill does:**
 - Sends task prompts and parameters to `www.anygen.io`
 - Uploads user-provided reference files to `www.anygen.io` after obtaining consent
+- Downloads thumbnail previews and generated files to `~/.openclaw/workspace/`
+- Spawns a background process (up to 20 min) to monitor progress and auto-download thumbnail
 - Reads/writes API key config at `~/.config/anygen/config.json`
 
 **What this skill does NOT do:**
@@ -57,7 +60,8 @@ After creating a task, you MUST start background monitoring via `sessions_spawn`
 2. Tell user: (a) generation started, (b) the online link, (c) ~10–15 min, free to do other things.
 3. Launch background monitor via `sessions_spawn` (Phase 4). Do NOT announce this to the user.
 4. Continue the conversation — do NOT wait.
-5. The background monitor handles notifying the user directly, then replies `ANNOUNCE_SKIP` so the main session does NOT relay anything further.
+5. The background monitor handles sending the thumbnail and notifying the user directly, then replies `ANNOUNCE_SKIP` so the main session does NOT relay anything further.
+6. Only send the storybook file if the user explicitly requests it.
 
 ## Communication Style
 
@@ -192,6 +196,7 @@ You MUST strictly follow every instruction below. Do not skip, reorder, or impro
 Task ID: {task_id}
 Task URL: {task_url}
 Script: {script_path}
+Thumbnail Output: {thumbnail_output_dir}
 User Language: {user_language}
 
 IMPORTANT: This monitoring task may take up to 20 minutes. Ensure your execution timeout is at least 25 minutes.
@@ -202,18 +207,38 @@ CRITICAL RULES:
   MUST be EXACTLY "ANNOUNCE_SKIP" — nothing else. This prevents the main session from
   sending duplicate messages.
 - Do NOT say anything beyond what is specified below. No greetings, no extra commentary.
-- NEVER include technical terms like "task_id", "poll", "sub-agent", "API", "script",
-  file paths, or status labels in any message to the user.
+- NEVER include technical terms like "task_id", "file_token", "poll", "sub-agent",
+  "API", "script", "workspace", "downloaded to", file paths, or status labels
+  in any message to the user.
 
 Your job:
 1. Run: python3 {script_path} poll --task-id {task_id}
    This command blocks for up to 20 minutes waiting for task completion.
-   No --output needed — results are viewed online.
+   Do NOT pass --output — the file will only be downloaded when the user requests it.
 
 2. On success:
-   a. Send a text message to the user (in {user_language}, natural tone):
-      "Your storybook is ready! You can view and edit it here: {task_url}"
-   b. Reply EXACTLY: ANNOUNCE_SKIP
+   a. Download thumbnail:
+      python3 {script_path} thumbnail --task-id {task_id} --output {thumbnail_output_dir}
+   b. Send the thumbnail preview image to the user. Choose the correct method:
+      - Feishu/Lark: Two-step process via OpenAPI —
+        Step 1 (Upload image): POST https://open.feishu.cn/open-apis/im/v1/images
+          curl -X POST 'https://open.feishu.cn/open-apis/im/v1/images' \
+            -H 'Authorization: Bearer <tenant_access_token>' \
+            -F 'image_type=message' \
+            -F 'image=@{thumbnail_output_dir}/thumbnail.png'
+          This returns an image_key.
+        Step 2 (Send image message): POST https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=chat_id
+          Request body:
+          {
+            "receive_id": "<chat_id>",
+            "msg_type": "image",
+            "content": "{\"image_key\":\"<image_key>\"}"
+          }
+      - Other platforms: Send via message tool with filePath.
+      The user must see the image inline — not a path or link.
+   c. Send a text message to the user (in {user_language}, natural tone):
+      "Your storybook is ready! If you'd like me to send you the file, just let me know."
+   d. Reply EXACTLY: ANNOUNCE_SKIP
 
 3. On failure:
    a. Send a text message to the user (in {user_language}):
@@ -230,7 +255,37 @@ Your job:
 
 Do NOT wait for the background monitor. Do NOT tell the user you launched it.
 
-**Handling the completion event.** The background monitor sends the notification to the user directly. It replies `ANNOUNCE_SKIP` as its final output, which means the main session should NOT relay or duplicate any message. If you receive a completion event with `ANNOUNCE_SKIP`, simply ignore it — the user has already been notified.
+**Handling the completion event.** The background monitor sends the thumbnail and notification to the user directly. It replies `ANNOUNCE_SKIP` as its final output, which means the main session should NOT relay or duplicate any message. If you receive a completion event with `ANNOUNCE_SKIP`, simply ignore it — the user has already been notified.
+
+#### When the User Requests the Storybook File
+
+Download, then send via the appropriate method for your IM environment:
+
+```bash
+python3 {script_path} download --task-id {task_id} --output ~/.openclaw/workspace/
+```
+
+- **Feishu/Lark**: Two-step process via OpenAPI —
+  Step 1 (Upload file): `POST https://open.feishu.cn/open-apis/im/v1/files`
+    ```
+    curl -X POST 'https://open.feishu.cn/open-apis/im/v1/files' \
+      -H 'Authorization: Bearer <tenant_access_token>' \
+      -F 'file_type=ppt' \
+      -F 'file=@~/.openclaw/workspace/output.pptx' \
+      -F 'file_name=output.pptx'
+    ```
+    This returns a `file_key`.
+  Step 2 (Send file message): `POST https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=chat_id`
+    ```json
+    {
+      "receive_id": "<chat_id>",
+      "msg_type": "file",
+      "content": "{\"file_key\":\"<file_key>\"}"
+    }
+    ```
+- **Other platforms**: Send via message tool with filePath.
+
+Follow up naturally: "Here's your storybook file! You can also edit online at [Task URL]."
 
 #### Fallback (no background monitoring)
 
@@ -275,6 +330,46 @@ python3 scripts/anygen.py upload --file ./document.pdf
 
 Returns a `file_token`. Max file size: 50MB. Tokens are persistent and reusable.
 
+### poll
+
+Blocks until completion. Downloads file only if `--output` is specified.
+
+```bash
+python3 scripts/anygen.py poll --task-id task_xxx                    # status only
+python3 scripts/anygen.py poll --task-id task_xxx --output ./output/ # with download
+```
+
+| Parameter | Description |
+|-----------|-------------|
+| --task-id | Task ID from `create` |
+| --output | Output directory (omit to skip download) |
+
+### thumbnail
+
+Downloads only the thumbnail preview image.
+
+```bash
+python3 scripts/anygen.py thumbnail --task-id task_xxx --output /tmp/
+```
+
+| Parameter | Description |
+|-----------|-------------|
+| --task-id | Task ID from `create` |
+| --output | Output directory |
+
+### download
+
+Downloads the generated file.
+
+```bash
+python3 scripts/anygen.py download --task-id task_xxx --output ./output/
+```
+
+| Parameter | Description |
+|-----------|-------------|
+| --task-id | Task ID from `create` |
+| --output | Output directory |
+
 ## Error Handling
 
 | Error | Solution |
@@ -287,6 +382,6 @@ Returns a `file_token`. Max file size: 50MB. Tokens are persistent and reusable.
 ## Notes
 
 - Max task execution time: 20 minutes
-- Results are viewable online at the task URL
+- Download link valid for 24 hours
 - Powered by Nano Banana pro and Nano Banana 2
 - Poll interval: 3 seconds
