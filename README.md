@@ -2,7 +2,7 @@
 
 > AI Skills for [OpenClaw](https://github.com/openclaw/openclaw) / Claude Code / Cursor
 
-A collection of AI-powered content generation skills using AnyGen and financial data tools.
+A collection of AI-powered content generation skills using AnyGen.
 
 ## Skills Included
 
@@ -14,14 +14,6 @@ Generate various content using AnyGen API:
 - **Storybooks** — Visual narratives
 - **Data Analysis** — Charts and insights
 - **SmartDraw** — Diagrams (professional / hand-drawn style)
-
-### 📈 Finance Report
-Professional equity research PDF reports:
-- **Earnings Analysis** — Post-earnings deep dives
-- **Earnings Preview** — Pre-earnings scenario modeling
-- **Sector Scan** — Cross-sector comparisons
-- **Initiating Coverage** — Full stock deep dives
-- **Valuation Analysis** — DCF, comps, multiples
 
 ## Installation
 
@@ -48,11 +40,7 @@ python3 anygen-suite/scripts/anygen.py config set api_key "sk-xxx"
 export ANYGEN_API_KEY="sk-xxx"
 ```
 
-Get your API key at [anygen.io/home](https://www.anygen.io/home) → Setting → Integration.
-
-### Finance Report
-
-Requires `fin_*` data tools (built into OpenClaw). No additional configuration needed.
+Get your API key at [anygen.io/home](https://www.anygen.io/home?auto_create_openclaw_key=1)
 
 ## Usage
 
@@ -65,10 +53,6 @@ Requires `fin_*` data tools (built into OpenClaw). No additional configuration n
 "Make a quarterly review slide deck"
 "Draw a microservice architecture diagram"
 
-# Finance Report  
-"Analyze NVDA earnings"
-"Do a sector scan of AI semiconductor stocks"
-"Give me a full coverage report on AVGO"
 ```
 
 ## Structure
@@ -82,22 +66,7 @@ anygen/
 │       ├── anygen.py
 │       ├── render-diagram.sh
 │       └── diagram-to-image.ts
-└── finance-report/             # Equity research PDF reports
-    ├── skill.md
-    ├── config/output.yaml
-    ├── templates/report-style.css
-    ├── workflows/
-    │   ├── pdf-output.md
-    │   ├── earnings-analysis.md
-    │   ├── earnings-preview.md
-    │   └── sector-scan.md
-    └── references/
-        ├── initiating-coverage.md
-        ├── competitive-analysis.md
-        ├── valuation-methodologies.md
-        ├── anti-bias.md
-        ├── evidence-hierarchy.md
-        └── variant-view.md
+└── (more skills coming soon)
 ```
 
 ## License

@@ -7,9 +7,6 @@
 ### 📊 Task Manager — 通用内容生成
 使用 AnyGen API 生成 PPT、文档、网站、故事板、数据分析、图表。任务完成后自动下载文件到本地。
 
-### 📈 Finance Report — 投研PDF报告
-专业股票研究报告：财报分析、赛道扫描、估值分析、首次覆盖。
-
 ## 安装
 
 ```bash
@@ -30,7 +27,7 @@ python3 anygen-suite/scripts/anygen.py config set api_key "sk-xxx"
 export ANYGEN_API_KEY="sk-xxx"
 ```
 
-API Key 获取：[anygen.io/home](https://www.anygen.io/home) → Setting → Integration
+API Key 获取：[anygen.io/home](https://www.anygen.io/home?auto_create_openclaw_key=1)
 
 ## 使用
 
@@ -42,8 +39,4 @@ API Key 获取：[anygen.io/home](https://www.anygen.io/home) → Setting → In
 "把这份数据整理成表格"
 "画一个微服务架构图"
 
-# 投研报告
-"分析英伟达财报"
-"AI半导体赛道扫描"
-"出一份AVGO的深度覆盖报告"
 ```
