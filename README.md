@@ -1,26 +1,32 @@
-# AnyGen AI Skills
+# AnyGen AI Skills (Modular)
 
-> AI Skills for [OpenClaw](https://github.com/openclaw/openclaw) / Claude Code / Cursor
+> Modular AI Skills for [OpenClaw](https://github.com/openclaw/openclaw) / Claude Code / Cursor
 
-A collection of AI-powered content generation skills using AnyGen.
+A **modular collection** of AI-powered content generation skills using AnyGen. Each skill is a standalone module focused on a specific task — install only what you need.
+
+> 💡 **Looking for an all-in-one solution?** Check out [anygen-suite-skill](https://github.com/AnyGenIO/anygen-suite-skill) for a unified skill that combines all functionalities.
 
 ## Skills Included
 
-### 📊 Task Manager
-Generate various content using AnyGen API:
-- **Slides** (PPT) — Professional presentations
-- **Documents** — Reports, papers, documentation
-- **Websites** — Landing pages, portfolios
-- **Storybooks** — Visual narratives
-- **Data Analysis** — Charts and insights
-- **SmartDraw** — Diagrams (professional / hand-drawn style)
+| Skill | Description |
+|-------|-------------|
+| `slide-generator` | Professional PPT/presentation generation |
+| `doc-generator` | Document and report generation |
+| `diagram-generator` | Diagrams, flowcharts, architecture diagrams (SmartDraw) |
+| `data-analysis` | Data analysis and visualization |
+| `deep-research` | Long-form research reports |
+| `financial-research` | Earnings and financial analysis |
+| `storybook-generator` | Visual narratives and storyboards |
+| `website-generator` | Landing pages and web development |
 
 ## Installation
 
 ### OpenClaw
 ```bash
-# Clone to skills directory
+# Clone the entire collection
 git clone https://github.com/AnyGenIO/anygen-skills.git ~/.openclaw/skills/anygen
+
+# Or install individual skills (copy specific directories)
 ```
 
 ### Claude Code
@@ -30,44 +36,57 @@ git clone https://github.com/AnyGenIO/anygen-skills.git ~/.claude/skills/anygen
 
 ## Configuration
 
-### AnyGen API Key (required for Task Manager)
-
 ```bash
-# Option 1: Config file
-python3 anygen-suite/scripts/anygen.py config set api_key "sk-xxx"
+# Set AnyGen API Key
+python3 <skill>/scripts/anygen.py config set api_key "sk-xxx"
 
-# Option 2: Environment variable
+# Or use environment variable
 export ANYGEN_API_KEY="sk-xxx"
 ```
 
 Get your API key at [anygen.io/home](https://www.anygen.io/home?auto_create_openclaw_key=1)
 
-## Usage
+## Usage Examples
 
 ```
-# Task Manager
+# Slides
 "Make a product roadmap PPT"
-"Draw a user journey whiteboard"
-"Write an AI industry deep research report"
-"Organize this data into a table"
-"Make a quarterly review slide deck"
+"Create a quarterly review presentation"
+
+# Documents
+"Write a technical design document"
+"Generate a project proposal"
+
+# Diagrams
 "Draw a microservice architecture diagram"
+"Create a user flow diagram"
 
+# Research
+"Write an AI industry deep research report"
+"Analyze NVIDIA's latest earnings"
+
+# Data
+"Organize this data into a table"
+"Create a visualization of sales trends"
 ```
 
-## Structure
+## Project Structure
 
 ```
-anygen/
-├── SKILL.md                    # Skill router
-├── anygen-suite/               # AnyGen content generation
-│   ├── skill.md
-│   └── scripts/
-│       ├── anygen.py
-│       ├── render-diagram.sh
-│       └── diagram-to-image.ts
-└── (more skills coming soon)
+anygen-skills/
+├── slide-generator/      # PPT generation
+├── doc-generator/        # Document generation
+├── diagram-generator/    # Diagram/flowchart generation
+├── data-analysis/        # Data analysis
+├── deep-research/        # Research reports
+├── financial-research/   # Financial analysis
+├── storybook-generator/  # Storybook creation
+└── website-generator/    # Website development
 ```
+
+## Related Projects
+
+- **[anygen-suite-skill](https://github.com/AnyGenIO/anygen-suite-skill)** — All-in-one unified skill (single installation for all features)
 
 ## License
 

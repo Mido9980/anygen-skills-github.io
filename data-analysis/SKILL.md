@@ -1,7 +1,7 @@
 ---
 name: anygen-data-analysis
 homepage: https://www.anygen.io
-description: "Analyze CSV data with AnyGen AI. Uses dialogue mode to understand analysis goals, metrics, and visualization needs before generating. Triggers: analyze data, analyze CSV, data table, organize data, data summary, chart from data."
+description: "Analyze data, generate charts and create data visualizations from natural language. Triggers: analyze this data, make a chart, create a dashboard, visualize trends, summarize this CSV, sales analysis, financial modeling, cohort analysis, funnel analysis, A/B test results, KPI tracking, data report, revenue breakdown, user retention analysis, conversion rate analysis."
 requires:
   - sessions_spawn
 env:

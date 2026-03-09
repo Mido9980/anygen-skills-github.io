@@ -1,7 +1,7 @@
 ---
 name: anygen-financial-research
 homepage: https://www.anygen.io
-description: "Accelerate financial research with AnyGen AI. Uses dialogue mode to understand research scope and focus before generating. Summarize earnings, extract KPIs from Nasdaq-listed companies. Not investment advice. Triggers: analyze earnings, financial summary, earnings report, company financials, KPI extraction."
+description: "Accelerate financial research with AI-powered analysis and reporting. Triggers: analyze earnings, earnings call summary, quarterly financials, revenue analysis, stock research, equity research report, financial due diligence, company valuation, DCF model, balance sheet analysis, income statement breakdown, cash flow analysis, SEC filing summary, investor memo, portfolio analysis, IPO analysis, M&A research, credit analysis, industry financial benchmarks."
 requires:
   - sessions_spawn
 env:

@@ -1,7 +1,7 @@
 ---
 name: anygen-doc
 homepage: https://www.anygen.io
-description: "Generate structured documents with AnyGen AI. Uses dialogue mode to understand audience, purpose, and content before generating. Background-monitors progress and delivers a preview with online editing link when ready."
+description: "Generate professional documents, reports and written content from natural language. Triggers: write a report, draft a document, competitive analysis, market research, technical design doc, product requirements document (PRD), project proposal, meeting summary, white paper, business plan, literature review, due diligence report, industry analysis, executive summary, standard operating procedure."
 requires:
   - sessions_spawn
 env:

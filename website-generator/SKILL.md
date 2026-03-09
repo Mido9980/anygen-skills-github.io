@@ -1,7 +1,7 @@
 ---
 name: anygen-website
 homepage: https://www.anygen.io
-description: "Build a landing page or simple website with AnyGen AI. Uses dialogue mode to understand purpose, audience, and content before generating. Triggers: build website, landing page, create webpage, web page, simple site."
+description: "Generate websites and landing pages from natural language. Triggers: build a website, create a landing page, make a homepage, product page, portfolio site, event page, coming soon page, pricing page, company intro site, personal blog, signup page, app download page, campaign page."
 requires:
   - sessions_spawn
 env:

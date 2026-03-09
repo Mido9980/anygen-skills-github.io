@@ -1,7 +1,7 @@
 ---
 name: anygen-storybook
 homepage: https://www.anygen.io
-description: "Create storybook-style visuals with AnyGen AI. Uses dialogue mode to understand narrative, style, and audience before generating. Supporting Nano Banana pro and Nano Banana 2. Triggers: storybook, visual narrative, creative storybook, visual story."
+description: "Create visual storyboards, illustrated narratives and creative visual content. Triggers: create a storyboard, make a comic, visual story, children's book, illustrated guide, step-by-step visual tutorial, brand story, product story, picture book, graphic novel, visual explainer, animated storyboard."
 requires:
   - sessions_spawn
 env:

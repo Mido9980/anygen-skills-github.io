@@ -1,7 +1,7 @@
 ---
 name: anygen-deep-research
 homepage: https://www.anygen.io
-description: "Generate long-form research reports with AnyGen AI. Uses dialogue mode to understand research scope, focus areas, and depth before generating. Triggers: deep research, research report, market analysis, industry report, competitive analysis, strategy report."
+description: "Conduct in-depth research and generate comprehensive analysis reports. Triggers: research this topic, deep dive into, industry analysis, competitive landscape, market sizing, trend analysis, technology review, investment research, sector overview, due diligence, benchmark study, patent landscape, regulatory analysis, academic survey, state of the art review."
 requires:
   - sessions_spawn
 env:

@@ -1,7 +1,7 @@
 ---
 name: anygen-diagram
 homepage: https://www.anygen.io
-description: "Draw any diagram or visual chart with AnyGen AI: flowchart, architecture, mind map, UML, ER, sequence, class, org chart, topology, Gantt, state, data flow, whiteboard, and more. Professional or hand-drawn style. Triggers: draw/make/create diagram, chart, visualize, flowchart, mind map, UML, ER diagram, org chart, whiteboard, system diagram, relationship diagram, professional diagram, hand-drawn diagram, sketch diagram, Draw.io, Excalidraw."
+description: "Generate professional diagrams, flowcharts and visual structures from natural language. Triggers: draw a flowchart, create architecture diagram, make a mind map, org chart, user journey map, system design diagram, ER diagram, sequence diagram, process flow, decision tree, network topology, class diagram, Gantt chart, SWOT analysis diagram, wireframe, sitemap."
 requires:
   - sessions_spawn
 env:
