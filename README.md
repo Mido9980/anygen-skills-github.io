@@ -4,7 +4,7 @@
 
 A **modular collection** of AI-powered content generation skills using AnyGen. Each skill is a standalone module focused on a specific task — install only what you need.
 
-> 💡 **Looking for an all-in-one solution?** Check out [anygen-suite-skill](https://github.com/AnyGenIO/anygen-suite-skill) for a unified skill that combines all functionalities.
+> 💡 **Looking for an all-in-one solution?** Check out [anygen-suite-skill](clawhub install anygen-skill) for a unified skill that combines all functionalities.
 
 ## Skills Included
 
@@ -88,7 +88,7 @@ anygen-skills/
 
 ## Related Projects
 
-- **[anygen-suite-skill](https://github.com/AnyGenIO/anygen-suite-skill)** — All-in-one unified skill (single installation for all features)
+- **[anygen-suite-skill](clawhub install anygen-skill)** — All-in-one unified skill (single installation for all features)
 
 ## License
 

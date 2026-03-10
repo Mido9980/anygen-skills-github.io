@@ -6,7 +6,7 @@
 
 使用 AnyGen 的**模块化** AI 内容生成技能集合。每个技能都是独立模块，专注于特定任务——按需安装。
 
-> 💡 **想要一体化方案？** 查看 [anygen-suite-skill](https://github.com/AnyGenIO/anygen-suite-skill)，一个整合所有功能的统一技能。
+> 💡 **想要一体化方案？** 查看 [anygen-suite-skill](clawhub install anygen-skill)，一个整合所有功能的统一技能。
 
 ## 包含技能
 
@@ -85,7 +85,7 @@ anygen-skills/
 
 ## 相关项目
 
-- **[anygen-suite-skill](https://github.com/AnyGenIO/anygen-suite-skill)** — 一体化统一技能（单次安装即可获得所有功能）
+- **[anygen-suite-skill](clawhub install anygen-skill)** — 一体化统一技能（单次安装即可获得所有功能）
 
 ## 许可证
 
