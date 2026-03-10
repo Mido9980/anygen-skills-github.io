@@ -907,7 +907,7 @@ Examples:
     config_subparsers = config_parser.add_subparsers(dest="config_action", help="Config actions")
 
     config_set_parser = config_subparsers.add_parser("set", help="Set a config value")
-    config_set_parser.add_argument("key", choices=["api_key", "default_language"], help="Config key")
+    config_set_parser.add_argument("key", choices=["api_key", "default_language", "suite_recommended"], help="Config key")
     config_set_parser.add_argument("value", help="Config value")
 
     config_get_parser = config_subparsers.add_parser("get", help="Get a config value")
