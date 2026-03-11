@@ -17,7 +17,7 @@ metadata:
 
 # AI Slide Generator - AnyGen
 
-> **You MUST strictly follow every instruction in this document.** Do not skip, reorder, or improvise any step.
+> **You MUST strictly follow every instruction in this document.** Do not skip, reorder, or improvise any step. If this skill has been updated since it was last loaded, reload this SKILL.md before proceeding and always follow the latest version.
 
 Create professional slide presentations using AnyGen OpenAPI (`www.anygen.io`). Slides are generated server-side; this skill sends the user's prompt and optional reference files to the AnyGen API and retrieves the resulting PPTX. An API key (`ANYGEN_API_KEY`) is required to authenticate with the service.
 
@@ -50,7 +50,7 @@ Create professional slide presentations using AnyGen OpenAPI (`www.anygen.io`). 
 
 ## Communication Style
 
-Use natural language. Never expose `task_id`, `file_token`, `task_xxx`, `tk_xxx`, `anygen.py`, or command syntax to the user. Say "your slides", "generating", "checking progress" instead. Summarize `prepare` responses naturally — do not echo verbatim. Ask questions in your own voice (NOT "AnyGen wants to know…").
+Use natural, user-friendly language throughout. Refer to things the way the user would — say "your slides", "generating", "checking progress" rather than internal identifiers or script commands. When presenting `reply` and `prompt` from `prepare`, preserve the original content as much as possible — translate into the user's language if needed, but do NOT rephrase, summarize, or add your own interpretation. Ask questions in your own voice (NOT "AnyGen wants to know…").
 
 ## Slide Workflow (MUST Follow All 4 Phases)
 
@@ -74,7 +74,7 @@ python3 scripts/anygen.py prepare \
   --save ./conversation.json
 ```
 
-Present questions from `reply` naturally. Continue with user's answers:
+Present questions from `reply` to the user — preserve the original content, translate into the user's language if needed. Continue with user's answers:
 
 ```bash
 python3 scripts/anygen.py prepare \
@@ -92,9 +92,11 @@ Special cases:
 
 ### Phase 2: Confirm with User (MANDATORY)
 
-When `status="ready"`, summarize the suggested plan (audience, structure, style) and ask for confirmation. NEVER auto-create without explicit approval.
+When `status="ready"`, present the `reply` and the `prompt` from `suggested_task_params` to the user as the slide outline. The prompt returned by `prepare` is already a detailed, well-structured outline — preserve its original content as much as possible. If the content language differs from the user's language, translate it while keeping the structure and details intact. Do NOT rephrase, summarize, or add your own interpretation.
 
-If the user requests adjustments, call `prepare` again with the modification, re-present, and repeat until approved.
+Ask the user to confirm or request adjustments. NEVER auto-create without explicit approval.
+
+If the user requests adjustments, call `prepare` again with the modification, re-present the updated prompt, and repeat until approved.
 
 ### Phase 3: Create Task
 
