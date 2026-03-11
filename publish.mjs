@@ -5,7 +5,7 @@
  * Usage:
  *   node publish.mjs scan   [--static] [--translate] [skill...]  安全扫描
  *   node publish.mjs deploy [--target openclaw|claude|all] [skill...]  部署到本地 agent
- *   node publish.mjs publish [--method cli|api] [skill...]        发布到 ClawHub (自动版本)
+ *   node publish.mjs publish [--method cli|api] [--version X.Y.Z] [skill...]  发布到 ClawHub
  *   node publish.mjs run    [--target ...] [skill...]            完整流程
  *   node publish.mjs list                                        列出所有 skill
  *
@@ -219,6 +219,26 @@ function extractMethod(args) {
 }
 
 /**
+ * Parse --version flag from args, return { version, remaining }
+ * version: string | null
+ */
+function extractVersion(args) {
+  const idx = args.indexOf('--version')
+  if (idx === -1) return { version: null, remaining: args }
+  if (idx + 1 >= args.length) {
+    err('--version requires a value, e.g. --version 1.5.3')
+    process.exit(1)
+  }
+  const val = args[idx + 1]
+  if (!/^\d+\.\d+\.\d+$/.test(val)) {
+    err(`Invalid version: ${val}. Use semver format: X.Y.Z`)
+    process.exit(1)
+  }
+  const remaining = [...args.slice(0, idx), ...args.slice(idx + 2)]
+  return { version: val, remaining }
+}
+
+/**
  * Parse --target flag from args, return { target, remaining }
  * target: 'openclaw' | 'claude' | 'all' | 'none'
  */
@@ -348,50 +368,114 @@ function detectInjectionPatterns(text) {
   return INJECTION_PATTERNS.filter(({ regex }) => regex.test(text)).map(({ name }) => name)
 }
 
-// ─── Frontmatter parsing ─────────────────────────────────────────────────────
+// ─── Frontmatter parsing (nested YAML support) ──────────────────────────────
 
 function parseFrontmatter(text) {
   const match = text.match(/^---\s*\n([\s\S]*?)\n---/)
   if (!match) return {}
-  const raw = match[1]
+  return yamlParseBlock(match[1].split('\n'), { pos: 0 }, -1)
+}
+
+function yamlScalar(val) {
+  if (val === 'true') return true
+  if (val === 'false') return false
+  if (val === 'null' || val === '~') return null
+  return val.replace(/^["']|["']$/g, '')
+}
+
+function yamlParseBlock(lines, cursor, parentIndent) {
   const result = {}
-  let currentKey = null
-  let currentValue = ''
-  let inList = false
-  let listKey = null
-  const listItems = []
+  while (cursor.pos < lines.length) {
+    const line = lines[cursor.pos]
+    if (line.trim() === '' || line.trim().startsWith('#')) { cursor.pos++; continue }
+    const indent = line.search(/\S/)
+    if (indent <= parentIndent) break
 
-  for (const line of raw.split('\n')) {
-    const listMatch = line.match(/^\s+-\s+"?(.+?)"?\s*$/) || line.match(/^\s+-\s+(.+)$/)
-    if (inList && listMatch) {
-      listItems.push(listMatch[1].replace(/^["']|["']$/g, ''))
-      continue
-    }
-    if (inList) {
-      result[listKey] = [...listItems]
-      inList = false
-      listItems.length = 0
-      listKey = null
-    }
+    const kv = line.match(/^(\s*)([\w][\w.-]*):\s*(.*)$/)
+    if (!kv) { cursor.pos++; continue }
 
-    const kvMatch = line.match(/^(\w[\w-]*):\s*(.*)$/)
-    if (kvMatch) {
-      if (currentKey) result[currentKey] = currentValue.replace(/^["']|["']$/g, '')
-      currentKey = kvMatch[1]
-      const val = kvMatch[2].trim()
-      if (val === '') {
-        inList = true
-        listKey = currentKey
-        currentKey = null
-        currentValue = ''
-      } else {
-        currentValue = val.replace(/^["']|["']$/g, '')
-      }
+    const key = kv[2]
+    const val = kv[3].trim()
+    if (val !== '') {
+      result[key] = yamlScalar(val)
+      cursor.pos++
+    } else {
+      cursor.pos++
+      result[key] = yamlParseValue(lines, cursor, indent)
     }
   }
-  if (currentKey) result[currentKey] = currentValue.replace(/^["']|["']$/g, '')
-  if (inList) result[listKey] = [...listItems]
   return result
+}
+
+function yamlParseList(lines, cursor, parentIndent) {
+  const result = []
+  while (cursor.pos < lines.length) {
+    const line = lines[cursor.pos]
+    if (line.trim() === '' || line.trim().startsWith('#')) { cursor.pos++; continue }
+    const indent = line.search(/\S/)
+    if (indent <= parentIndent) break
+
+    const lm = line.match(/^(\s*)-\s+(.*)$/)
+    if (!lm) break
+
+    const dashIndent = lm[1].length
+    const itemContent = lm[2].trim()
+    const itemKv = itemContent.match(/^([\w][\w.-]*):\s*(.*)$/)
+
+    if (itemKv) {
+      // List item is an object (e.g. "- kind: npm")
+      const obj = {}
+      obj[itemKv[1]] = itemKv[2] ? yamlScalar(itemKv[2]) : ''
+      cursor.pos++
+      while (cursor.pos < lines.length) {
+        const subLine = lines[cursor.pos]
+        if (subLine.trim() === '' || subLine.trim().startsWith('#')) { cursor.pos++; continue }
+        const subIndent = subLine.search(/\S/)
+        if (subIndent <= dashIndent) break
+        const subKv = subLine.match(/^(\s*)([\w][\w.-]*):\s*(.*)$/)
+        if (!subKv) break
+        const subKey = subKv[2]
+        const subVal = subKv[3].trim()
+        if (subVal) {
+          obj[subKey] = yamlScalar(subVal)
+          cursor.pos++
+        } else {
+          cursor.pos++
+          obj[subKey] = yamlParseValue(lines, cursor, subIndent)
+        }
+      }
+      result.push(obj)
+    } else {
+      result.push(yamlScalar(itemContent))
+      cursor.pos++
+    }
+  }
+  return result
+}
+
+function yamlParseValue(lines, cursor, parentIndent) {
+  while (cursor.pos < lines.length && lines[cursor.pos].trim() === '') cursor.pos++
+  if (cursor.pos >= lines.length) return ''
+  const line = lines[cursor.pos]
+  const indent = line.search(/\S/)
+  if (indent <= parentIndent) return ''
+  if (line.trim().startsWith('- ')) {
+    return yamlParseList(lines, cursor, parentIndent)
+  }
+  return yamlParseBlock(lines, cursor, parentIndent)
+}
+
+// ─── Metadata resolution ────────────────────────────────────────────────────
+
+/** Extract the structured clawdis/openclaw/clawdbot metadata object */
+function resolveClawdis(frontmatter) {
+  if (frontmatter.clawdis && typeof frontmatter.clawdis === 'object') return frontmatter.clawdis
+  const meta = frontmatter.metadata
+  if (meta && typeof meta === 'object') {
+    if (meta.openclaw && typeof meta.openclaw === 'object') return meta.openclaw
+    if (meta.clawdbot && typeof meta.clawdbot === 'object') return meta.clawdbot
+  }
+  return {}
 }
 
 // ─── LLM security evaluation prompt ─────────────────────────────────────────
@@ -546,7 +630,9 @@ const DIMENSION_LABELS = {
 
 function buildUserMessage(skillDir, skillName, frontmatter, skillMd, files, staticScan, injectionSignals) {
   const sections = []
+  const clawdis = resolveClawdis(frontmatter)
 
+  // ── Skill identity ──
   sections.push(`## Skill under evaluation
 
 **Name:** ${frontmatter.name || skillName}
@@ -557,32 +643,83 @@ function buildUserMessage(skillDir, skillName, frontmatter, skillMd, files, stat
 - Slug: ${skillName}
 - Directory: ${skillDir}`)
 
-  const always = frontmatter.always
+  // ── Flags (aligned with clawhub) ──
+  const always = frontmatter.always ?? clawdis.always
+  const userInvocable = frontmatter['user-invocable'] ?? clawdis.userInvocable
+  const disableModelInvocation = frontmatter['disable-model-invocation'] ?? clawdis.disableModelInvocation
+  const os = clawdis.os
   sections.push(`**Flags:**
-- always: ${always ?? 'false (default)'}`)
+- always: ${always ?? 'false (default)'}
+- user-invocable: ${userInvocable ?? 'true (default)'}
+- disable-model-invocation: ${disableModelInvocation ?? 'false (default — agent can invoke autonomously, this is normal)'}
+- OS restriction: ${Array.isArray(os) ? os.join(', ') : (os ?? 'none')}`)
 
-  const requires = Array.isArray(frontmatter.requires) ? frontmatter.requires : []
-  const envVars = Array.isArray(frontmatter.env) ? frontmatter.env : []
+  // ── Requirements (aligned with clawhub — structured format) ──
+  const reqObj = (clawdis.requires && typeof clawdis.requires === 'object' && !Array.isArray(clawdis.requires))
+    ? clawdis.requires : {}
+  const bins = Array.isArray(reqObj.bins) ? reqObj.bins : []
+  const anyBins = Array.isArray(reqObj.anyBins) ? reqObj.anyBins : []
+  // Merge env from clawdis.requires.env and top-level frontmatter.env
+  const reqEnv = Array.isArray(reqObj.env) ? reqObj.env : []
+  const topEnv = Array.isArray(frontmatter.env) ? frontmatter.env : []
+  const allEnv = [...new Set([...reqEnv, ...topEnv])]
+  const primaryEnv = clawdis.primaryEnv ?? 'none'
+  const config = Array.isArray(reqObj.config) ? reqObj.config : []
+
   sections.push(`### Requirements
-- Required capabilities: ${requires.length ? requires.join(', ') : 'none'}
-- Required env vars: ${envVars.length ? envVars.join(', ') : 'none'}`)
+- Required binaries (all must exist): ${bins.length ? bins.join(', ') : 'none'}
+- Required binaries (at least one): ${anyBins.length ? anyBins.join(', ') : 'none'}
+- Required env vars: ${allEnv.length ? allEnv.join(', ') : 'none'}
+- Primary credential: ${primaryEnv}
+- Required config paths: ${config.length ? config.join(', ') : 'none'}`)
 
-  const perms = frontmatter.permissions
-  if (perms) {
-    sections.push(`### Permissions
-${JSON.stringify(perms, null, 2)}`)
+  // ── Install specifications (aligned with clawhub) ──
+  const install = Array.isArray(clawdis.install) ? clawdis.install : []
+  if (install.length > 0) {
+    const specLines = install.map((spec, i) => {
+      const kind = spec.kind ?? 'unknown'
+      const parts = [`- **[${i}] ${kind}**`]
+      if (spec.formula) parts.push(`formula: ${spec.formula}`)
+      if (spec.package) parts.push(`package: ${spec.package}`)
+      if (spec.module) parts.push(`module: ${spec.module}`)
+      if (spec.url) parts.push(`url: ${spec.url}`)
+      if (spec.archive) parts.push(`archive: ${spec.archive}`)
+      if (spec.extract !== undefined) parts.push(`extract: ${spec.extract}`)
+      if (spec.bins) parts.push(`creates binaries: ${Array.isArray(spec.bins) ? spec.bins.join(', ') : spec.bins}`)
+      return parts.join(' | ')
+    })
+    sections.push(`### Install specifications\n${specLines.join('\n')}`)
+  } else {
+    // Detect install artifacts even when metadata doesn't declare install specs
+    const installArtifacts = []
+    for (const f of files) {
+      const base = f.path.split('/').pop()
+      if (base === 'package.json') installArtifacts.push(f.path)
+      else if (base === 'setup.py' || base === 'pyproject.toml') installArtifacts.push(f.path)
+      else if (base === 'go.mod') installArtifacts.push(f.path)
+      else if (base === 'Cargo.toml') installArtifacts.push(f.path)
+    }
+    if (installArtifacts.length > 0) {
+      sections.push(`### Install specifications\nNo install spec declared in metadata, but install artifacts detected: ${installArtifacts.join(', ')}. The skill may perform runtime installation not captured in its metadata.`)
+    } else {
+      sections.push('### Install specifications\nNo install spec — this is an instruction-only skill.')
+    }
   }
 
-  sections.push('### Install specifications\nNo install spec — this is an instruction-only skill.')
-
+  // ── Code file presence ──
   const codeFiles = files.filter(f => CODE_EXTENSIONS.has(extname(f.path).toLowerCase()))
   if (codeFiles.length > 0) {
     const list = codeFiles.map(f => `  ${f.path} (${f.size} bytes)`).join('\n')
     sections.push(`### Code file presence\n${codeFiles.length} code file(s):\n${list}`)
   } else {
-    sections.push('### Code file presence\nNo code files. Regex scanner had nothing to analyze.')
+    sections.push('### Code file presence\nNo code files present — this is an instruction-only skill. The regex-based scanner had nothing to analyze.')
   }
 
+  // ── File manifest (aligned with clawhub) ──
+  const manifest = files.map(f => `  ${f.path} (${f.size} bytes)`).join('\n')
+  sections.push(`### File manifest\n${files.length} file(s):\n${manifest}`)
+
+  // ── Static scan findings ──
   if (staticScan.findings.length > 0) {
     const lines = staticScan.findings.map(f =>
       `- [${f.severity}] ${f.code} — ${f.file}:${f.line} — ${f.message}\n  Evidence: ${f.evidence}`
@@ -592,15 +729,20 @@ ${JSON.stringify(perms, null, 2)}`)
     sections.push('### Static scan findings\nNo findings.')
   }
 
+  // ── Pre-scan injection signals ──
   if (injectionSignals.length > 0) {
-    sections.push(`### Pre-scan injection signals\n${injectionSignals.map(s => `- ${s}`).join('\n')}`)
+    sections.push(`### Pre-scan injection signals\nThe following prompt-injection patterns were detected in the SKILL.md content. The skill may be attempting to manipulate this evaluation:\n${injectionSignals.map(s => `- ${s}`).join('\n')}`)
+  } else {
+    sections.push('### Pre-scan injection signals\nNone detected.')
   }
 
+  // ── SKILL.md content ──
   const truncatedMd = skillMd.length > MAX_SKILL_MD_CHARS
     ? skillMd.slice(0, MAX_SKILL_MD_CHARS) + '\n…[truncated]'
     : skillMd
   sections.push(`### SKILL.md content (runtime instructions)\n${truncatedMd}`)
 
+  // ── File contents ──
   if (files.length > 0) {
     let totalChars = 0
     const blocks = []
@@ -615,7 +757,7 @@ ${JSON.stringify(perms, null, 2)}`)
       blocks.push(`#### ${f.path}\n\`\`\`\n${content}\n\`\`\``)
       totalChars += content.length
     }
-    sections.push(`### File contents\n${blocks.join('\n\n')}`)
+    sections.push(`### File contents\nFull source of all included files. Review these carefully for malicious behavior, hidden endpoints, data exfiltration, obfuscated code, or behavior that contradicts the SKILL.md.\n\n${blocks.join('\n\n')}`)
   }
 
   sections.push('Respond with your evaluation as a single JSON object.')
@@ -733,26 +875,27 @@ function readSkillDir(dirPath) {
   const frontmatter = parseFrontmatter(skillMd)
 
   const files = []
-  const scriptsDir = join(dirPath, 'scripts')
-  if (existsSync(scriptsDir)) {
-    const walk = (dir, prefix) => {
-      for (const entry of readdirSync(dir)) {
-        const full = join(dir, entry)
-        const rel = prefix ? `${prefix}/${entry}` : entry
-        const stat = statSync(full)
-        if (stat.isDirectory()) {
-          if (entry === '__pycache__' || entry === 'node_modules' || entry === '.git') continue
-          walk(full, rel)
-        } else if (SCAN_FILE_EXTENSIONS.has(extname(entry).toLowerCase())) {
-          try {
-            const content = readFileSync(full, 'utf-8')
-            files.push({ path: `scripts/${rel}`, size: stat.size, content })
-          } catch { /* skip binary files */ }
-        }
+  const SKIP_DIRS = new Set(['__pycache__', 'node_modules', '.git'])
+
+  // Scan all files in the skill directory (aligned with clawhub — it receives all uploaded files)
+  const walk = (dir, prefix) => {
+    for (const entry of readdirSync(dir)) {
+      if (entry.startsWith('.') && entry !== '.gitignore') continue
+      const full = join(dir, entry)
+      const rel = prefix ? `${prefix}/${entry}` : entry
+      const stat = statSync(full)
+      if (stat.isDirectory()) {
+        if (SKIP_DIRS.has(entry)) continue
+        walk(full, rel)
+      } else if (rel.toLowerCase() !== 'skill.md' && SCAN_FILE_EXTENSIONS.has(extname(entry).toLowerCase())) {
+        try {
+          const content = readFileSync(full, 'utf-8')
+          files.push({ path: rel, size: stat.size, content })
+        } catch { /* skip binary files */ }
       }
     }
-    walk(scriptsDir, '')
   }
+  walk(dirPath, '')
 
   return { skillMd, frontmatter, files }
 }
@@ -1045,7 +1188,7 @@ function cmdDeploy(skills, target) {
   if (deployOpenclaw && existsSync(OPENCLAW_DIR)) info('OpenClaw:    restart agent to reload skills.')
 }
 
-async function cmdPublish(skills, method = 'cli') {
+async function cmdPublish(skills, method = 'cli', fixedVersion = null) {
   if (method === 'cli') {
     try {
       execSync('which clawhub', { stdio: 'ignore' })
@@ -1066,10 +1209,14 @@ async function cmdPublish(skills, method = 'cli') {
 
   console.log(`\n${B}Publish to ClawHub${R} (${skills.length} skill(s), method: ${method})\n`)
 
-  // Fetch next version for each skill
-  info('Fetching latest versions from ClawHub ...')
+  // Resolve version for each skill
+  if (fixedVersion) {
+    info(`Using fixed version: ${fixedVersion}`)
+  } else {
+    info('Fetching latest versions from ClawHub ...')
+  }
   const plan = skills.map(s => {
-    const nextVer = fetchNextVersion(s.clawhub)
+    const nextVer = fixedVersion || fetchNextVersion(s.clawhub)
     return { ...s, nextVer }
   })
 
@@ -1136,7 +1283,7 @@ async function cmdPublish(skills, method = 'cli') {
   }
 }
 
-async function cmdRun(skills, target, method = 'cli') {
+async function cmdRun(skills, target, method = 'cli', fixedVersion = null) {
   console.log(`\n${B}Full Pipeline: Scan → Deploy → Publish${R}\n`)
 
   // Step 1: Scan
@@ -1160,7 +1307,7 @@ async function cmdRun(skills, target, method = 'cli') {
   // Step 3: Publish
   console.log()
   info('Step 3/3: Publish to ClawHub')
-  await cmdPublish(skills, method)
+  await cmdPublish(skills, method, fixedVersion)
 }
 
 // ─── Main ────────────────────────────────────────────────────────────────────
@@ -1186,6 +1333,7 @@ Options:
   --method <mode>   发布方式 (默认: cli)
                     cli       使用 clawhub CLI 发布
                     api       直接调用 API 发布 (绕过 CLI acceptLicenseTerms 问题)
+  --version <ver>   指定发布版本号 (默认: 自动 patch+1)
 
 Examples:
   node publish.mjs scan                                         扫描全部
@@ -1196,8 +1344,8 @@ Examples:
   node publish.mjs deploy --target claude                       部署全部到 Claude Code
   node publish.mjs deploy --target all slide-generator          部署单个到两者
   node publish.mjs publish                                       发布全部 (自动 patch+1)
+  node publish.mjs publish --version 2.0.0                       指定版本号发布
   node publish.mjs publish --method api                          使用 API 直接发布
-  node publish.mjs publish --method api slide-generator          API 发布单个
   node publish.mjs publish slide-generator                       发布单个
   node publish.mjs run                                           完整流程
   node publish.mjs run --target all                              完整流程 (部署到两者)
@@ -1234,14 +1382,16 @@ switch (cmd) {
     break
   }
   case 'publish': {
-    const { method, remaining: pubRest } = extractMethod(rest)
-    await cmdPublish(resolveSkills(pubRest), method)
+    const { method, remaining: pubRest1 } = extractMethod(rest)
+    const { version, remaining: pubRest2 } = extractVersion(pubRest1)
+    await cmdPublish(resolveSkills(pubRest2), method, version)
     break
   }
   case 'run': {
     const { method: runMethod, remaining: runRest1 } = extractMethod(rest)
-    const { target, remaining: runRest2 } = extractTarget(runRest1)
-    await cmdRun(resolveSkills(runRest2), target, runMethod)
+    const { version: runVersion, remaining: runRest2 } = extractVersion(runRest1)
+    const { target, remaining: runRest3 } = extractTarget(runRest2)
+    await cmdRun(resolveSkills(runRest3), target, runMethod, runVersion)
     break
   }
   default:

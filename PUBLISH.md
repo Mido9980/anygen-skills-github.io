@@ -9,6 +9,7 @@ node publish.mjs scan --translate          # 扫描并翻译结果为中文
 node publish.mjs deploy                    # 部署到本地 OpenClaw
 node publish.mjs deploy --target claude    # 部署到本地 Claude Code
 node publish.mjs publish                   # 发布全部到 ClawHub（自动 patch+1）
+node publish.mjs publish --version 2.0.0   # 指定版本号发布
 node publish.mjs publish slide-generator   # 发布单个
 node publish.mjs run                       # 完整流程：扫描 → 部署 → 发布
 node publish.mjs list                      # 列出所有 skill
@@ -96,11 +97,14 @@ gh workflow run security-scan.yml -f static_only=true
 
 ### 4. 发布到 ClawHub
 
-PR 合并后发布。版本号自动从 ClawHub 拉取当前最新版并 patch+1。
+PR 合并后发布。默认自动从 ClawHub 拉取当前最新版并 patch+1，也可用 `--version` 指定。
 
 ```bash
-# 发布全部（推荐）
+# 发布全部（自动 patch+1）
 node publish.mjs publish
+
+# 指定版本号
+node publish.mjs publish --version 2.0.0
 
 # 发布指定 skill
 node publish.mjs publish slide-generator
