@@ -144,7 +144,8 @@ def upload_file(api_key, file_path, extra_headers=None):
 
 # ============ Prepare Command ============
 
-def prepare_task(api_key, messages, file_tokens=None, extra_headers=None):
+def prepare_task(api_key, messages, file_tokens=None, prepare_session_id=None,
+                 base_suggested_task_params=None, extra_headers=None):
     """Call the prepare API for multi-turn requirement analysis."""
     auth_token = make_auth_token(api_key)
 
@@ -154,6 +155,10 @@ def prepare_task(api_key, messages, file_tokens=None, extra_headers=None):
     }
     if file_tokens:
         body["file_tokens"] = file_tokens
+    if prepare_session_id:
+        body["prepare_session_id"] = prepare_session_id
+    if base_suggested_task_params:
+        body["base_suggested_task_params"] = base_suggested_task_params
 
     headers = {"Content-Type": "application/json"}
     if extra_headers:
@@ -195,13 +200,30 @@ def run_prepare_interactive(api_key, initial_message, file_tokens=None,
     """Run prepare in interactive or single-shot mode."""
     messages = []
     loaded_file_tokens = set()
+    prepare_session_id = None
+    base_suggested_task_params = None
 
     # Load existing conversation from file
     if input_file:
         try:
-            data = read_json(input_file)
+            input_path = Path(input_file)
+            save_path = Path(save_file) if save_file else None
+            same_input_output = (
+                save_path is not None and
+                input_path.expanduser().resolve(strict=False) == save_path.expanduser().resolve(strict=False)
+            )
+
+            if not input_path.exists() and same_input_output:
+                input_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(input_path, "w") as f:
+                    json.dump({"messages": []}, f)
+                log_info(f"Input file not found, initialized a new conversation file: {input_path}")
+
+            data = read_json(input_path)
             messages = data.get("messages", [])
             loaded_file_tokens = set(data.get("file_tokens", []))
+            prepare_session_id = data.get("prepare_session_id")
+            base_suggested_task_params = data.get("suggested_task_params")
             if loaded_file_tokens:
                 file_tokens = (file_tokens or []) + list(loaded_file_tokens)
             log_info(f"Loaded conversation history: {len(messages)} messages")
@@ -224,7 +246,14 @@ def run_prepare_interactive(api_key, initial_message, file_tokens=None,
         log_error("No messages. Use --message or --input to load conversation history")
         return None
 
-    result = prepare_task(api_key, messages, file_tokens, extra_headers)
+    result = prepare_task(
+        api_key=api_key,
+        messages=messages,
+        file_tokens=file_tokens,
+        prepare_session_id=prepare_session_id,
+        base_suggested_task_params=base_suggested_task_params,
+        extra_headers=extra_headers,
+    )
     if not result:
         return None
 
@@ -234,6 +263,8 @@ def run_prepare_interactive(api_key, initial_message, file_tokens=None,
     is_ready = status == "ready"
     suggested = result.get("suggested_task_params")
     updated_messages = result.get("messages", messages)
+    prepare_session_id = result.get("prepare_session_id") or prepare_session_id
+    base_suggested_task_params = suggested or base_suggested_task_params
 
     print()
     print("=" * 60)
@@ -245,22 +276,10 @@ def run_prepare_interactive(api_key, initial_message, file_tokens=None,
         print()
         log_success("Requirement analysis complete! Suggested task params:")
         print(f"  Operation: {suggested.get('operation', 'N/A')}")
-        prompt_preview = suggested.get('prompt', '')
-        if len(prompt_preview) > 200:
-            prompt_preview = prompt_preview[:200] + "..."
-        print(f"  Prompt: {prompt_preview}")
+        print(f"  Prompt:")
+        print(suggested.get('prompt', ''))
         if suggested.get("file_tokens"):
             print(f"  File Tokens: {', '.join(suggested['file_tokens'])}")
-        print()
-        print("You can create the task with:")
-        cmd_parts = [
-            "python3 anygen.py create",
-            f"--operation {suggested.get('operation', 'chat')}",
-            f"--prompt \"{suggested.get('prompt', '')}\"",
-        ]
-        for ft in (suggested.get("file_tokens") or []):
-            cmd_parts.append(f"--file-token {ft}")
-        print(f"  {' '.join(cmd_parts)}")
     else:
         print()
         log_info("Conversation in progress. Continue with the prepare command:")
@@ -271,8 +290,9 @@ def run_prepare_interactive(api_key, initial_message, file_tokens=None,
         save_data = {
             "messages": updated_messages,
             "file_tokens": file_tokens or [],
+            "prepare_session_id": prepare_session_id,
             "status": status,
-            "suggested_task_params": suggested,
+            "suggested_task_params": base_suggested_task_params,
         }
         try:
             write_json(save_file, save_data)
