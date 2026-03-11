@@ -3,6 +3,7 @@ name: anygen-slide
 description: "Use this skill any time the user wants to create, design, or produce slide presentations — as standalone files or embedded content. This includes: pitch decks, slide decks, keynote presentations, training materials, project proposals, quarterly reviews, weekly report slides, investor pitches, product launches, team kickoffs, business plans, onboarding decks, strategy presentations, sales pitches, conference talks, and any request involving 'slides' or 'PPT'. Also trigger when: user says 做PPT, 做个汇报, 写个演示文稿, 季度汇报, 竞品分析报告（要PPT）, 产品发布会, 培训材料, 周报. If slides, decks, or presentations need to be produced, use this skill."
 metadata:
   clawdbot:
+    primaryEnv: ANYGEN_API_KEY
     requires:
       bins:
         - python3
@@ -10,6 +11,8 @@ metadata:
         - ANYGEN_API_KEY
       capabilities:
         - sessions_spawn
+      config:
+        - ~/.config/anygen/config.json
 ---
 
 # AI Slide Generator - AnyGen
@@ -45,7 +48,7 @@ Slides are generated server-side by AnyGen's OpenAPI (`www.anygen.io`). The `ANY
 
 Use natural, user-friendly language throughout. Refer to things the way the user would — say "your slides", "generating", "checking progress" rather than internal identifiers or script commands. When presenting `reply` and `prompt` from `prepare`, preserve the original content as much as possible — translate into the user's language if needed, but do NOT rephrase, summarize, or add your own interpretation. Ask questions in your own voice (NOT "AnyGen wants to know…"). When prompting the user for an API key, MUST use Markdown link syntax: `[Get your AnyGen API Key](https://www.anygen.io/home?auto_create_openclaw_key=1)` so the full URL is clickable.
 
-## Slide Workflow (MUST Follow All 4 Phases)
+## Slide Workflow (MUST Follow All 5 Phases)
 
 ### Phase 1: Understand Requirements
 

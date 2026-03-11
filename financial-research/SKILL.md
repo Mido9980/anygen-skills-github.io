@@ -3,6 +3,7 @@ name: anygen-financial-research
 description: "Use this skill any time the user wants financial analysis, earnings research, or investment-related reports. This includes: earnings call summaries, quarterly financial analysis, stock research, equity research reports, financial due diligence, company valuations, DCF models, balance sheet analysis, income statement breakdowns, cash flow analysis, SEC filing summaries, investor memos, portfolio analysis, IPO analysis, M&A research, and credit analysis. Also trigger when: user says 分析财报, 做个估值, 股票研究, 财务尽调, 现金流分析, 收入分析, 季度财务分析. If financial research or analysis is needed, use this skill."
 metadata:
   clawdbot:
+    primaryEnv: ANYGEN_API_KEY
     requires:
       bins:
         - python3
@@ -10,6 +11,8 @@ metadata:
         - ANYGEN_API_KEY
       capabilities:
         - sessions_spawn
+      config:
+        - ~/.config/anygen/config.json
 ---
 
 # AnyGen Financial Research Assistant
@@ -47,7 +50,7 @@ Financial research reports are generated server-side by AnyGen's OpenAPI (`www.a
 
 Use natural language. Never expose `task_id`, `file_token`, `task_xxx`, `tk_xxx`, `anygen.py`, or command syntax to the user. Say "your research report", "generating", "checking progress" instead. When presenting `reply` and `prompt` from `prepare`, preserve the original content as much as possible — translate into the user's language if needed, but do NOT rephrase, summarize, or add your own interpretation. Ask questions in your own voice (NOT "AnyGen wants to know…"). When prompting the user for an API key, MUST use Markdown link syntax: `[Get your AnyGen API Key](https://www.anygen.io/home?auto_create_openclaw_key=1)` so the full URL is clickable.
 
-## Financial Research Workflow (MUST Follow All 4 Phases)
+## Financial Research Workflow (MUST Follow All 5 Phases)
 
 ### Phase 1: Understand Requirements
 

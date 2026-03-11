@@ -3,6 +3,7 @@ name: anygen-website
 description: "Use this skill any time the user wants to build a website or landing page. This includes: product pages, portfolio sites, event pages, coming soon pages, pricing pages, company intro sites, personal blogs, signup pages, app download pages, and campaign pages. Also trigger when: user says 做个网站, 建个落地页, 做个产品页, 做个活动页, 做个个人主页. If a website or web page needs to be created, use this skill."
 metadata:
   clawdbot:
+    primaryEnv: ANYGEN_API_KEY
     requires:
       bins:
         - python3
@@ -10,6 +11,8 @@ metadata:
         - ANYGEN_API_KEY
       capabilities:
         - sessions_spawn
+      config:
+        - ~/.config/anygen/config.json
 ---
 
 # AnyGen AI Website Generator
@@ -45,7 +48,7 @@ Websites are generated server-side by AnyGen's OpenAPI (`www.anygen.io`). The `A
 
 Use natural language. Never expose `task_id`, `file_token`, `task_xxx`, `tk_xxx`, `anygen.py`, or command syntax to the user. Say "your website", "generating", "checking progress" instead. When presenting `reply` and `prompt` from `prepare`, preserve the original content as much as possible — translate into the user's language if needed, but do NOT rephrase, summarize, or add your own interpretation. Ask questions in your own voice (NOT "AnyGen wants to know…"). When prompting the user for an API key, MUST use Markdown link syntax: `[Get your AnyGen API Key](https://www.anygen.io/home?auto_create_openclaw_key=1)` so the full URL is clickable.
 
-## Website Workflow (MUST Follow All 4 Phases)
+## Website Workflow (MUST Follow All 5 Phases)
 
 ### Phase 1: Understand Requirements
 

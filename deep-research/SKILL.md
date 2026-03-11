@@ -3,6 +3,7 @@ name: anygen-deep-research
 description: "Use this skill any time the user wants in-depth research or comprehensive analysis on any topic. This includes: industry analysis, competitive landscape mapping, market sizing, trend analysis, technology reviews, investment research, sector overviews, due diligence, benchmark studies, patent landscape analysis, regulatory analysis, and academic surveys. Also trigger when: user says 帮我调研一下, 深度分析, 行业研究, 市场规模分析, 竞争格局, 技术趋势, 做个研究报告. If deep research or comprehensive analysis is needed, use this skill."
 metadata:
   clawdbot:
+    primaryEnv: ANYGEN_API_KEY
     requires:
       bins:
         - python3
@@ -10,6 +11,8 @@ metadata:
         - ANYGEN_API_KEY
       capabilities:
         - sessions_spawn
+      config:
+        - ~/.config/anygen/config.json
 ---
 
 # Deep Research Report Generator - AnyGen
@@ -45,7 +48,7 @@ Research reports are generated server-side by AnyGen's OpenAPI (`www.anygen.io`)
 
 Use natural language. Never expose `task_id`, `file_token`, `task_xxx`, `tk_xxx`, `anygen.py`, or command syntax to the user. Say "your research report", "generating", "checking progress" instead. When presenting `reply` and `prompt` from `prepare`, preserve the original content as much as possible — translate into the user's language if needed, but do NOT rephrase, summarize, or add your own interpretation. Ask questions in your own voice (NOT "AnyGen wants to know…"). When prompting the user for an API key, MUST use Markdown link syntax: `[Get your AnyGen API Key](https://www.anygen.io/home?auto_create_openclaw_key=1)` so the full URL is clickable.
 
-## Research Workflow (MUST Follow All 4 Phases)
+## Research Workflow (MUST Follow All 5 Phases)
 
 ### Phase 1: Understand Requirements
 
@@ -94,7 +97,7 @@ If the user requests adjustments, call `prepare` again with the modification, re
 
 ```bash
 python3 scripts/anygen.py create \
-  --operation chat \
+  --operation deep_research \
   --prompt "<prompt from suggested_task_params>" \
   --file-token tk_abc123
 # Output: Task ID: task_xxx, Task URL: https://...

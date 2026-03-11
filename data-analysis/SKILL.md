@@ -3,6 +3,7 @@ name: anygen-data-analysis
 description: "Use this skill any time the user wants to analyze data, create charts, or build data visualizations. This includes: sales analysis, financial modeling, cohort analysis, funnel analysis, A/B test results, KPI tracking, data reports, revenue breakdowns, user retention analysis, conversion rate analysis, CSV summarization, and dashboard creation. Also trigger when: user says 分析这组数据, 做个图表, 数据可视化, 销售分析, 漏斗分析, 留存分析, 做个数据报表. If data needs to be analyzed or visualized, use this skill."
 metadata:
   clawdbot:
+    primaryEnv: ANYGEN_API_KEY
     requires:
       bins:
         - python3
@@ -10,6 +11,8 @@ metadata:
         - ANYGEN_API_KEY
       capabilities:
         - sessions_spawn
+      config:
+        - ~/.config/anygen/config.json
 ---
 
 # AnyGen Data Analysis (CSV)
@@ -45,7 +48,7 @@ Data analysis reports are generated server-side by AnyGen's OpenAPI (`www.anygen
 
 Use natural language. Never expose `task_id`, `file_token`, `task_xxx`, `tk_xxx`, `anygen.py`, or command syntax to the user. Say "your analysis results", "generating", "checking progress" instead. When presenting `reply` and `prompt` from `prepare`, preserve the original content as much as possible — translate into the user's language if needed, but do NOT rephrase, summarize, or add your own interpretation. Ask questions in your own voice (NOT "AnyGen wants to know…"). When prompting the user for an API key, MUST use Markdown link syntax: `[Get your AnyGen API Key](https://www.anygen.io/home?auto_create_openclaw_key=1)` so the full URL is clickable.
 
-## Data Analysis Workflow (MUST Follow All 4 Phases)
+## Data Analysis Workflow (MUST Follow All 5 Phases)
 
 ### Phase 1: Understand Requirements
 

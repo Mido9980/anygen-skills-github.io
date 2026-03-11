@@ -9,7 +9,7 @@ from pathlib import Path
 
 from auth import load_config, save_config, get_api_key, CONFIG_FILE, ENV_API_KEY
 from io import BytesIO
-from fileutil import validate_file, encode_file, read_file_bytes, read_json, write_json, write_bytes
+from fileutil import read_file_bytes, read_json, write_json, write_bytes
 
 try:
     import requests
@@ -22,6 +22,8 @@ API_BASE = "https://www.anygen.io"
 POLL_INTERVAL = 3  # seconds
 MAX_POLL_TIME = 1200  # 20 minutes
 OPENCLAW_WORKSPACE = Path.home() / ".openclaw" / "workspace"
+SKILL_NAME = "doc-generator"
+
 
 
 def log_info(msg):
@@ -144,6 +146,9 @@ def prepare_task(api_key, messages, file_tokens=None, prepare_session_id=None,
         body["prepare_session_id"] = prepare_session_id
     if base_suggested_task_params:
         body["base_suggested_task_params"] = base_suggested_task_params
+
+    # Add extra for tracking
+    body["extra"] = {"create_from": "skill", "skill_name": SKILL_NAME}
 
     headers = {"Content-Type": "application/json"}
     if extra_headers:
@@ -289,60 +294,30 @@ def run_prepare_interactive(api_key, initial_message, file_tokens=None,
 
 # ============ Create Task ============
 
-def create_task(api_key, operation, prompt, language=None, slide_count=None,
-                template=None, ratio=None, export_format=None, files=None,
-                file_tokens=None, extra_headers=None, style=None):
+def create_task(api_key, operation, prompt, export_format=None,
+                file_tokens=None, extra_headers=None):
     """Create an async generation task."""
     log_info("Creating task...")
 
     auth_token = make_auth_token(api_key)
 
-    # Enhance prompt with style if provided
-    final_prompt = prompt
-    if style:
-        final_prompt = f"{prompt}\n\nStyle requirement: {style}"
-        log_info(f"Style applied: {style}")
-
     # Build request body
     body = {
         "auth_token": auth_token,
         "operation": operation,
-        "prompt": final_prompt
+        "prompt": prompt
     }
 
-    if language:
-        body["language"] = language
-
-    # Slide-specific parameters
-    if operation == "slide":
-        if slide_count:
-            body["slide_count"] = slide_count
-        if template:
-            body["template"] = template
-        if ratio:
-            body["ratio"] = ratio
-
-    # Export format
     if export_format:
         body["export_format"] = export_format
-
-    # Legacy base64 file encoding
-    if files:
-        encoded_files = []
-        for file_path in files:
-            try:
-                encoded_files.append(encode_file(file_path))
-                log_info(f"Attachment added: {file_path}")
-            except (FileNotFoundError, ValueError) as e:
-                log_error(str(e))
-                return None
-        if encoded_files:
-            body["files"] = encoded_files
 
     # File tokens from upload API
     if file_tokens:
         body["file_tokens"] = file_tokens
         log_info(f"Added {len(file_tokens)} file token(s)")
+
+    # Add extra for tracking
+    body["extra"] = {"create_from": "skill", "skill_name": SKILL_NAME}
 
     # Build headers
     headers = {"Content-Type": "application/json"}
@@ -575,6 +550,9 @@ def send_message(api_key, task_id, content, files=None, extra_headers=None):
     if files:
         body["files"] = files
 
+    # Add extra for tracking
+    body["extra"] = {"create_from": "skill", "skill_name": SKILL_NAME}
+
     try:
         log_info(f"Sending message to task: {task_id}")
         response = requests.post(
@@ -691,10 +669,10 @@ def poll_messages(api_key, task_id, since_message_id, limit=10,
 
 
 def run_full_workflow(api_key, operation, prompt, output_dir, extra_headers=None,
-                      style=None, file_tokens=None, **kwargs):
+                      file_tokens=None, export_format=None):
     """Run the full workflow: create -> poll -> download."""
     task_id = create_task(api_key, operation, prompt, extra_headers=extra_headers,
-                          style=style, file_tokens=file_tokens, **kwargs)
+                          file_tokens=file_tokens, export_format=export_format)
     if not task_id:
         return False
 
@@ -732,8 +710,6 @@ def main():
         help="Multi-turn requirement analysis before creating a task")
     add_common_args(prepare_parser)
     prepare_parser.add_argument("--message", "-m", help="User message text")
-    prepare_parser.add_argument("--file", action="append", dest="files",
-                                 help="File path to upload and attach (can be repeated)")
     prepare_parser.add_argument("--file-token", action="append", dest="file_tokens",
                                  help="File token (from upload). Can be repeated")
     prepare_parser.add_argument("--input", dest="input_file",
@@ -750,16 +726,9 @@ def main():
                                choices=["slide", "doc", "smart_draw", "storybook", "data_analysis", "website", "finance", "deep_research", "ai_designer"],
                                help="Operation type")
     create_parser.add_argument("--prompt", "-p", required=True, help="Content prompt")
-    create_parser.add_argument("--language", "-l", help="Language (zh-CN, en-US)")
-    create_parser.add_argument("--slide-count", "-c", type=int, help="Number of slides")
-    create_parser.add_argument("--template", "-t", help="Slide template")
-    create_parser.add_argument("--ratio", "-r", choices=["16:9", "4:3"], help="Slide ratio")
-    create_parser.add_argument("--export-format", "-f", help="Export format (slide: pptx/image/thumbnail, doc: docx/image/thumbnail, smart_draw: drawio/excalidraw)")
-    create_parser.add_argument("--file", action="append", dest="files",
-                               help="Attachment file path (legacy base64, can be repeated)")
+    create_parser.add_argument("--export-format", "-f", help="Export format (smart_draw: drawio/excalidraw)")
     create_parser.add_argument("--file-token", action="append", dest="file_tokens",
                                help="File token from upload (can be repeated)")
-    create_parser.add_argument("--style", "-s", help="Style preference")
 
     # ---- poll command ----
     poll_parser = subparsers.add_parser("poll", help="Poll task status until completion and auto-download")
@@ -811,16 +780,9 @@ def main():
                            choices=["slide", "doc", "smart_draw", "storybook", "data_analysis", "website", "finance", "deep_research", "ai_designer"],
                            help="Operation type")
     run_parser.add_argument("--prompt", "-p", required=True, help="Content prompt")
-    run_parser.add_argument("--language", "-l", help="Language (zh-CN, en-US)")
-    run_parser.add_argument("--slide-count", "-c", type=int, help="Number of slides")
-    run_parser.add_argument("--template", "-t", help="Slide template")
-    run_parser.add_argument("--ratio", "-r", choices=["16:9", "4:3"], help="Slide ratio")
-    run_parser.add_argument("--export-format", "-f", help="Export format (slide: pptx/image/thumbnail, doc: docx/image/thumbnail, smart_draw: drawio/excalidraw)")
-    run_parser.add_argument("--file", action="append", dest="files",
-                           help="Attachment file path (legacy base64)")
+    run_parser.add_argument("--export-format", "-f", help="Export format (smart_draw: drawio/excalidraw)")
     run_parser.add_argument("--file-token", action="append", dest="file_tokens",
                            help="File token from upload (can be repeated)")
-    run_parser.add_argument("--style", "-s", help="Style preference")
     run_parser.add_argument("--output", help="Output directory (optional)")
 
     # ---- config command ----
@@ -916,21 +878,10 @@ def main():
         if args.stdin:
             message = sys.stdin.read().strip()
 
-        # Upload files and collect file tokens
-        file_tokens = list(args.file_tokens or [])
-        if args.files:
-            for file_path in args.files:
-                log_info(f"Uploading file: {file_path}")
-                token = upload_file(api_key, file_path, extra_headers=extra_headers)
-                if token:
-                    file_tokens.append(token)
-                else:
-                    log_error(f"File upload failed, skipping: {file_path}")
-
         result = run_prepare_interactive(
             api_key=api_key,
             initial_message=message,
-            file_tokens=file_tokens if file_tokens else None,
+            file_tokens=args.file_tokens,
             input_file=args.input_file,
             save_file=args.save_file,
             extra_headers=extra_headers
@@ -942,15 +893,9 @@ def main():
             api_key=api_key,
             operation=args.operation,
             prompt=args.prompt,
-            language=args.language,
-            slide_count=args.slide_count,
-            template=args.template,
-            ratio=args.ratio,
             export_format=args.export_format,
-            files=args.files,
             file_tokens=args.file_tokens,
             extra_headers=extra_headers,
-            style=args.style
         )
         sys.exit(0 if task_id else 1)
 
@@ -1048,14 +993,8 @@ def main():
             prompt=args.prompt,
             output_dir=args.output,
             extra_headers=extra_headers,
-            language=args.language,
-            slide_count=args.slide_count,
-            template=args.template,
-            ratio=args.ratio,
-            export_format=args.export_format,
-            files=args.files,
             file_tokens=args.file_tokens,
-            style=args.style
+            export_format=args.export_format,
         )
         sys.exit(0 if success else 1)
 

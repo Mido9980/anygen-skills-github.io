@@ -3,6 +3,7 @@ name: anygen-doc
 description: "Use this skill any time the user wants to create, draft, or generate a written document or report. This includes: competitive analysis, market research reports, technical design docs, PRDs, project proposals, meeting summaries, white papers, business plans, literature reviews, due diligence reports, industry analysis, executive summaries, SOPs, memos, and any request where the output is a structured document. Also trigger when: user says 写个文档, 做个竞品调研, 写份报告, 产品需求文档, 技术方案, 项目提案, 行业分析, 会议纪要整理成文档. If a document or report needs to be created, use this skill."
 metadata:
   clawdbot:
+    primaryEnv: ANYGEN_API_KEY
     requires:
       bins:
         - python3
@@ -10,6 +11,8 @@ metadata:
         - ANYGEN_API_KEY
       capabilities:
         - sessions_spawn
+      config:
+        - ~/.config/anygen/config.json
 ---
 
 # AI Document Generator - AnyGen
@@ -45,7 +48,7 @@ Documents are generated server-side by AnyGen's OpenAPI (`www.anygen.io`). The `
 
 Use natural language. Never expose `task_id`, `file_token`, `task_xxx`, `tk_xxx`, `anygen.py`, or command syntax to the user. Say "your document", "generating", "checking progress" instead. When presenting `reply` and `prompt` from `prepare`, preserve the original content as much as possible — translate into the user's language if needed, but do NOT rephrase, summarize, or add your own interpretation. Ask questions in your own voice (NOT "AnyGen wants to know…"). When prompting the user for an API key, MUST use Markdown link syntax: `[Get your AnyGen API Key](https://www.anygen.io/home?auto_create_openclaw_key=1)` so the full URL is clickable.
 
-## Document Workflow (MUST Follow All 4 Phases)
+## Document Workflow (MUST Follow All 5 Phases)
 
 ### Phase 1: Understand Requirements
 

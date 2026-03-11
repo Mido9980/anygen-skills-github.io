@@ -3,6 +3,7 @@ name: anygen-storybook
 description: "Use this skill any time the user wants to create visual stories, illustrated narratives, or storybook content. This includes: storybooks, comics, children's books, illustrated guides, step-by-step visual tutorials, brand stories, product stories, picture books, graphic novels, and visual explainers. Also trigger when: user says 做个绘本, 画个故事, 做个漫画, 做个图文教程, 做个品牌故事. If a visual story or illustrated content needs to be created, use this skill."
 metadata:
   clawdbot:
+    primaryEnv: ANYGEN_API_KEY
     requires:
       bins:
         - python3
@@ -10,6 +11,8 @@ metadata:
         - ANYGEN_API_KEY
       capabilities:
         - sessions_spawn
+      config:
+        - ~/.config/anygen/config.json
 ---
 
 # AnyGen Storybook / Creative Generator
@@ -45,7 +48,7 @@ Storybooks are generated server-side by AnyGen's OpenAPI (`www.anygen.io`). The 
 
 Use natural language. Never expose `task_id`, `file_token`, `task_xxx`, `tk_xxx`, `anygen.py`, or command syntax to the user. Say "your storybook", "generating", "checking progress" instead. When presenting `reply` and `prompt` from `prepare`, preserve the original content as much as possible — translate into the user's language if needed, but do NOT rephrase, summarize, or add your own interpretation. Ask questions in your own voice (NOT "AnyGen wants to know…"). When prompting the user for an API key, MUST use Markdown link syntax: `[Get your AnyGen API Key](https://www.anygen.io/home?auto_create_openclaw_key=1)` so the full URL is clickable.
 
-## Storybook Workflow (MUST Follow All 4 Phases)
+## Storybook Workflow (MUST Follow All 5 Phases)
 
 ### Phase 1: Understand Requirements
 

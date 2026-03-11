@@ -3,6 +3,7 @@ name: anygen-image
 description: "Use this skill any time the user wants to generate, create, or design images, illustrations, or visual assets. This includes: posters, banners, social media graphics, product mockups, logo concepts, thumbnails, marketing creatives, profile pictures, book covers, album art, icon designs, and any request for AI-generated imagery. Also trigger when: user says 生成图片, 做个海报, 画个插图, 设计个banner, 做个封面, 社交媒体配图, 产品效果图. If an image or visual asset needs to be created, use this skill."
 metadata:
   clawdbot:
+    primaryEnv: ANYGEN_API_KEY
     requires:
       bins:
         - python3
@@ -10,6 +11,8 @@ metadata:
         - ANYGEN_API_KEY
       capabilities:
         - sessions_spawn
+      config:
+        - ~/.config/anygen/config.json
 ---
 
 # AnyGen Image Generator
@@ -46,7 +49,7 @@ Images are generated server-side by AnyGen's OpenAPI (`www.anygen.io`). The `ANY
 
 Use natural language. Never expose `task_id`, `file_token`, `task_xxx`, `tk_xxx`, `anygen.py`, or command syntax to the user. Say "your images", "generating", "checking progress" instead. When presenting `reply` and `prompt` from `prepare`, preserve the original content as much as possible — translate into the user's language if needed, but do NOT rephrase, summarize, or add your own interpretation. Ask questions in your own voice (NOT "AnyGen wants to know…"). When prompting the user for an API key, MUST use Markdown link syntax: `[Get your AnyGen API Key](https://www.anygen.io/home?auto_create_openclaw_key=1)` so the full URL is clickable.
 
-## Image Generation Workflow (MUST Follow All 4 Phases)
+## Image Generation Workflow (MUST Follow All 5 Phases)
 
 ### Phase 1: Understand Requirements
 
@@ -95,7 +98,7 @@ If the user requests adjustments, call `prepare` again with the modification, re
 
 ```bash
 python3 scripts/anygen.py create \
-  --operation ai-designer \
+  --operation ai_designer \
   --prompt "<prompt from suggested_task_params>" \
   --file-token tk_abc123
 # Output: Task ID: task_xxx, Task URL: https://...

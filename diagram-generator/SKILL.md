@@ -3,6 +3,7 @@ name: anygen-diagram
 description: "Use this skill any time the user wants to create diagrams, flowcharts, or visual structures. This includes: architecture diagrams, mind maps, org charts, user journey maps, system design diagrams, ER diagrams, sequence diagrams, process flows, decision trees, network topologies, class diagrams, Gantt charts, SWOT analysis diagrams, wireframes, and sitemaps. Also trigger when: user says 画个流程图, 做个架构图, 思维导图, 组织架构图, 用户旅程图, 系统设计图, 甘特图. If a diagram or visual structure needs to be drawn, use this skill."
 metadata:
   clawdbot:
+    primaryEnv: ANYGEN_API_KEY
     requires:
       bins:
         - python3
@@ -11,6 +12,8 @@ metadata:
         - ANYGEN_API_KEY
       capabilities:
         - sessions_spawn
+      config:
+        - ~/.config/anygen/config.json
     install:
       - id: npm-playwright
         kind: node
@@ -39,7 +42,7 @@ Generate diagrams and visual charts using AnyGen OpenAPI (`www.anygen.io`). Diag
 
 Diagrams are generated server-side by AnyGen's OpenAPI (`www.anygen.io`). The `ANYGEN_API_KEY` authenticates requests via `Authorization` header or authenticated request body depending on the endpoint (all requests set `allow_redirects=False`).
 
-**What this skill does:** sends prompts to `www.anygen.io`, uploads user-specified reference files after consent, downloads diagram files to `~/.openclaw/workspace/`, renders diagram source (Draw.io XML / Excalidraw JSON) to PNG locally using Playwright and Chromium, monitors progress in background via `sessions_spawn` (declared in `requires`), reads/writes config at `~/.config/anygen/config.json`. During rendering, the browser loads diagram libraries from public CDNs (`esm.sh`, `viewer.diagrams.net`, `fonts.googleapis.com`).
+**What this skill does:** sends prompts to `www.anygen.io`, uploads user-specified reference files after consent, downloads diagram files to `~/.openclaw/workspace/`, renders diagram source (Draw.io XML / Excalidraw JSON) to PNG locally using Playwright and Chromium, monitors progress in background via `sessions_spawn` (declared in `requires`), reads/writes config at `~/.config/anygen/config.json`. During rendering, the browser loads diagram libraries from public CDNs (`esm.sh`, `viewer.diagrams.net`, `fonts.googleapis.com`). These CDNs serve only static, open-source rendering libraries (JavaScript, CSS, fonts); no diagram content is transmitted to them — all rendering happens locally in the headless browser.
 
 **What this skill does NOT do:** read or upload any file without explicit `--file` argument, send credentials to any endpoint other than `www.anygen.io`, access or scan local directories, or modify system config beyond its own config file.
 
@@ -58,7 +61,7 @@ Diagrams are generated server-side by AnyGen's OpenAPI (`www.anygen.io`). The `A
 
 Use natural language. Never expose `task_id`, `file_token`, `task_xxx`, `tk_xxx`, `anygen.py`, or command syntax to the user. Say "your diagram", "generating", "checking progress" instead. When presenting `reply` and `prompt` from `prepare`, preserve the original content as much as possible — translate into the user's language if needed, but do NOT rephrase, summarize, or add your own interpretation. Ask questions in your own voice (NOT "AnyGen wants to know…"). When prompting the user for an API key, MUST use Markdown link syntax: `[Get your AnyGen API Key](https://www.anygen.io/home?auto_create_openclaw_key=1)` so the full URL is clickable.
 
-## Diagram Workflow (MUST Follow All 4 Phases)
+## Diagram Workflow (MUST Follow All 5 Phases)
 
 ### Phase 1: Understand Requirements
 
@@ -110,7 +113,7 @@ python3 scripts/anygen.py create \
   --operation smart_draw \
   --prompt "<prompt from suggested_task_params>" \
   --file-token tk_abc123 \
-  --export-format drawio
+  --export-format drawio  # professional style; or excalidraw (hand-drawn style)
 # Output: Task ID: task_xxx, Task URL: https://...
 ```
 
