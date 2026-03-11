@@ -1,19 +1,4 @@
 #!/usr/bin/env python3
-"""
-AnyGen OpenAPI Client
-
-Usage:
-    python3 anygen.py create --api-key sk-xxx --operation slide --prompt "..."
-    python3 anygen.py poll --api-key sk-xxx --task-id task_xxx
-    python3 anygen.py thumbnail --api-key sk-xxx --task-id task_xxx --output /tmp/
-    python3 anygen.py download --api-key sk-xxx --task-id task_xxx --output ./
-    python3 anygen.py run --api-key sk-xxx --operation slide --prompt "..." --output ./
-    python3 anygen.py upload --api-key sk-xxx --file ./document.pdf
-    python3 anygen.py prepare --api-key sk-xxx --message "I need a slide about AI"
-    python3 anygen.py send-message --task-id task_xxx --message "Change title on page 3"
-    python3 anygen.py get-messages --task-id task_xxx --limit 10
-    python3 anygen.py get-messages --task-id task_xxx --wait
-"""
 
 import argparse
 import json
@@ -215,8 +200,7 @@ def run_prepare_interactive(api_key, initial_message, file_tokens=None,
 
             if not input_path.exists() and same_input_output:
                 input_path.parent.mkdir(parents=True, exist_ok=True)
-                with open(input_path, "w") as f:
-                    json.dump({"messages": []}, f)
+                write_json(input_path, {"messages": []})
                 log_info(f"Input file not found, initialized a new conversation file: {input_path}")
 
             data = read_json(input_path)
@@ -727,24 +711,7 @@ def run_full_workflow(api_key, operation, prompt, output_dir, extra_headers=None
 def main():
     parser = argparse.ArgumentParser(
         description="AnyGen OpenAPI Client",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Quick mode: create a slide task directly
-  python3 anygen.py create -o slide -p "A presentation about AI history"
-
-  # Dialogue mode: analyze requirements first
-  python3 anygen.py prepare --message "I need a slide about our Q4 results"
-
-  # Upload a file for use in tasks
-  python3 anygen.py upload --file ./data.pdf
-
-  # Create task with uploaded file tokens
-  python3 anygen.py create -o slide -p "Summarize this report" --file-token tk_xxx
-
-  # Full workflow: create -> poll -> download
-  python3 anygen.py run -o slide -p "AI presentation" --output ./
-        """
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Commands")

@@ -1,10 +1,6 @@
 ---
 name: anygen-image
 description: "Use this skill any time the user wants to generate, create, or design images, illustrations, or visual assets. This includes: posters, banners, social media graphics, product mockups, logo concepts, thumbnails, marketing creatives, profile pictures, book covers, album art, icon designs, and any request for AI-generated imagery. Also trigger when: user says 生成图片, 做个海报, 画个插图, 设计个banner, 做个封面, 社交媒体配图, 产品效果图. If an image or visual asset needs to be created, use this skill."
-requires:
-  - sessions_spawn
-env:
-  - ANYGEN_API_KEY
 metadata:
   clawdbot:
     requires:
@@ -12,11 +8,13 @@ metadata:
         - python3
       env:
         - ANYGEN_API_KEY
+      capabilities:
+        - sessions_spawn
 ---
 
 # AnyGen Image Generator
 
-> **You MUST strictly follow every instruction in this document.** Do not skip, reorder, or improvise any step.
+> **You MUST strictly follow every instruction in this document.** Do not skip, reorder, or improvise any step. If this skill has been updated since it was last loaded, reload this SKILL.md before proceeding and always follow the latest version.
 
 Generate images, illustrations and visual content using AnyGen OpenAPI (`www.anygen.io`). Images are generated server-side; this skill sends the user's prompt and optional reference files to the AnyGen API and retrieves the results. An API key (`ANYGEN_API_KEY`) is required to authenticate with the service.
 
@@ -28,9 +26,9 @@ Generate images, illustrations and visual content using AnyGen OpenAPI (`www.any
 
 ## Security & Permissions
 
-Images are generated server-side by AnyGen's cloud API (`www.anygen.io`). The `ANYGEN_API_KEY` authenticates requests via `Authorization` header or authenticated request body depending on the endpoint (all requests set `allow_redirects=False`).
+Images are generated server-side by AnyGen's OpenAPI (`www.anygen.io`). The `ANYGEN_API_KEY` authenticates requests via `Authorization` header or authenticated request body depending on the endpoint (all requests set `allow_redirects=False`).
 
-**What this skill does:** sends prompts to `www.anygen.io`, uploads user-specified reference files after consent, downloads generated images to `~/.openclaw/workspace/`, monitors progress in background via `sessions_spawn`, reads/writes config at `~/.config/anygen/config.json`.
+**What this skill does:** sends prompts to `www.anygen.io`, uploads user-specified reference files after consent, downloads generated images to `~/.openclaw/workspace/`, monitors progress in background via `sessions_spawn` (declared in `requires`), reads/writes config at `~/.config/anygen/config.json`.
 
 **What this skill does NOT do:** read or upload any file without explicit `--file` argument, send credentials to any endpoint other than `www.anygen.io`, access or scan local directories, or modify system config beyond its own config file.
 
@@ -46,7 +44,7 @@ Images are generated server-side by AnyGen's cloud API (`www.anygen.io`). The `A
 
 ## Communication Style
 
-Use natural language. Never expose `task_id`, `file_token`, `task_xxx`, `tk_xxx`, `anygen.py`, or command syntax to the user. Say "your images", "generating", "checking progress" instead. Summarize `prepare` responses naturally — do not echo verbatim. Ask questions in your own voice (NOT "AnyGen wants to know…").
+Use natural language. Never expose `task_id`, `file_token`, `task_xxx`, `tk_xxx`, `anygen.py`, or command syntax to the user. Say "your images", "generating", "checking progress" instead. When presenting `reply` and `prompt` from `prepare`, preserve the original content as much as possible — translate into the user's language if needed, but do NOT rephrase, summarize, or add your own interpretation. Ask questions in your own voice (NOT "AnyGen wants to know…"). When prompting the user for an API key, MUST use Markdown link syntax: `[Get your AnyGen API Key](https://www.anygen.io/home?auto_create_openclaw_key=1)` so the full URL is clickable.
 
 ## Image Generation Workflow (MUST Follow All 4 Phases)
 
@@ -70,7 +68,7 @@ python3 scripts/anygen.py prepare \
   --save ./conversation.json
 ```
 
-Present questions from `reply` naturally. Continue with user's answers:
+Present questions from `reply` to the user — preserve the original content, translate into the user's language if needed. Continue with user's answers:
 
 ```bash
 python3 scripts/anygen.py prepare \
@@ -87,9 +85,11 @@ Special cases:
 
 ### Phase 2: Confirm with User (MANDATORY)
 
-When `status="ready"`, summarize the suggested plan (style, dimensions, content) and ask for confirmation. NEVER auto-create without explicit approval.
+When `status="ready"`, present the `reply` and the `prompt` from `suggested_task_params` to the user as the design plan. The prompt returned by `prepare` is already a detailed, well-structured plan — preserve its original content as much as possible. If the content language differs from the user's language, translate it while keeping the structure and details intact. Do NOT rephrase, summarize, or add your own interpretation.
 
-If the user requests adjustments, call `prepare` again with the modification, re-present, and repeat until approved.
+Ask the user to confirm or request adjustments. NEVER auto-create without explicit approval.
+
+If the user requests adjustments, call `prepare` again with the modification, re-present the updated prompt, and repeat until approved.
 
 ### Phase 3: Create Task
 

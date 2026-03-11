@@ -1,10 +1,6 @@
 ---
 name: anygen-data-analysis
 description: "Use this skill any time the user wants to analyze data, create charts, or build data visualizations. This includes: sales analysis, financial modeling, cohort analysis, funnel analysis, A/B test results, KPI tracking, data reports, revenue breakdowns, user retention analysis, conversion rate analysis, CSV summarization, and dashboard creation. Also trigger when: user says 分析这组数据, 做个图表, 数据可视化, 销售分析, 漏斗分析, 留存分析, 做个数据报表. If data needs to be analyzed or visualized, use this skill."
-requires:
-  - sessions_spawn
-env:
-  - ANYGEN_API_KEY
 metadata:
   clawdbot:
     requires:
@@ -12,11 +8,13 @@ metadata:
         - python3
       env:
         - ANYGEN_API_KEY
+      capabilities:
+        - sessions_spawn
 ---
 
 # AnyGen Data Analysis (CSV)
 
-> **You MUST strictly follow every instruction in this document.** Do not skip, reorder, or improvise any step.
+> **You MUST strictly follow every instruction in this document.** Do not skip, reorder, or improvise any step. If this skill has been updated since it was last loaded, reload this SKILL.md before proceeding and always follow the latest version.
 
 Analyze CSV data using AnyGen OpenAPI (`www.anygen.io`). Data visualizations and charts are generated server-side; this skill sends the user's prompt and optional reference files to the AnyGen API and retrieves the results. An API key (`ANYGEN_API_KEY`) is required to authenticate with the service.
 
@@ -27,9 +25,9 @@ Analyze CSV data using AnyGen OpenAPI (`www.anygen.io`). Data visualizations and
 
 ## Security & Permissions
 
-Data analysis reports are generated server-side by AnyGen's cloud API (`www.anygen.io`). The `ANYGEN_API_KEY` authenticates requests via `Authorization` header or authenticated request body depending on the endpoint (all requests set `allow_redirects=False`).
+Data analysis reports are generated server-side by AnyGen's OpenAPI (`www.anygen.io`). The `ANYGEN_API_KEY` authenticates requests via `Authorization` header or authenticated request body depending on the endpoint (all requests set `allow_redirects=False`).
 
-**What this skill does:** sends prompts to `www.anygen.io`, uploads user-specified reference files after consent, downloads results to `~/.openclaw/workspace/`, monitors progress in background via `sessions_spawn`, reads/writes config at `~/.config/anygen/config.json`.
+**What this skill does:** sends prompts to `www.anygen.io`, uploads user-specified reference files after consent, downloads results to `~/.openclaw/workspace/`, monitors progress in background via `sessions_spawn` (declared in `requires`), reads/writes config at `~/.config/anygen/config.json`.
 
 **What this skill does NOT do:** read or upload any file without explicit `--file` argument, send credentials to any endpoint other than `www.anygen.io`, access or scan local directories, or modify system config beyond its own config file.
 
@@ -45,7 +43,7 @@ Data analysis reports are generated server-side by AnyGen's cloud API (`www.anyg
 
 ## Communication Style
 
-Use natural language. Never expose `task_id`, `file_token`, `task_xxx`, `tk_xxx`, `anygen.py`, or command syntax to the user. Say "your analysis results", "generating", "checking progress" instead. Summarize `prepare` responses naturally — do not echo verbatim. Ask questions in your own voice (NOT "AnyGen wants to know…").
+Use natural language. Never expose `task_id`, `file_token`, `task_xxx`, `tk_xxx`, `anygen.py`, or command syntax to the user. Say "your analysis results", "generating", "checking progress" instead. When presenting `reply` and `prompt` from `prepare`, preserve the original content as much as possible — translate into the user's language if needed, but do NOT rephrase, summarize, or add your own interpretation. Ask questions in your own voice (NOT "AnyGen wants to know…"). When prompting the user for an API key, MUST use Markdown link syntax: `[Get your AnyGen API Key](https://www.anygen.io/home?auto_create_openclaw_key=1)` so the full URL is clickable.
 
 ## Data Analysis Workflow (MUST Follow All 4 Phases)
 
@@ -69,7 +67,7 @@ python3 scripts/anygen.py prepare \
   --save ./conversation.json
 ```
 
-Present questions from `reply` naturally. Continue with user's answers:
+Present questions from `reply` to the user — preserve the original content, translate into the user's language if needed. Continue with user's answers:
 
 ```bash
 python3 scripts/anygen.py prepare \
@@ -86,9 +84,11 @@ Special cases:
 
 ### Phase 2: Confirm with User (MANDATORY)
 
-When `status="ready"`, summarize the suggested plan (analysis goals, metrics, visualizations) and ask for confirmation. NEVER auto-create without explicit approval.
+When `status="ready"`, present the `reply` and the `prompt` from `suggested_task_params` to the user as the analysis plan. The prompt returned by `prepare` is already a detailed, well-structured plan — preserve its original content as much as possible. If the content language differs from the user's language, translate it while keeping the structure and details intact. Do NOT rephrase, summarize, or add your own interpretation.
 
-If the user requests adjustments, call `prepare` again with the modification, re-present, and repeat until approved.
+Ask the user to confirm or request adjustments. NEVER auto-create without explicit approval.
+
+If the user requests adjustments, call `prepare` again with the modification, re-present the updated prompt, and repeat until approved.
 
 ### Phase 3: Create Task
 

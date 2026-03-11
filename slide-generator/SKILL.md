@@ -1,10 +1,6 @@
 ---
 name: anygen-slide
 description: "Use this skill any time the user wants to create, design, or produce slide presentations — as standalone files or embedded content. This includes: pitch decks, slide decks, keynote presentations, training materials, project proposals, quarterly reviews, weekly report slides, investor pitches, product launches, team kickoffs, business plans, onboarding decks, strategy presentations, sales pitches, conference talks, and any request involving 'slides' or 'PPT'. Also trigger when: user says 做PPT, 做个汇报, 写个演示文稿, 季度汇报, 竞品分析报告（要PPT）, 产品发布会, 培训材料, 周报. If slides, decks, or presentations need to be produced, use this skill."
-requires:
-  - sessions_spawn
-env:
-  - ANYGEN_API_KEY
 metadata:
   clawdbot:
     requires:
@@ -12,6 +8,8 @@ metadata:
         - python3
       env:
         - ANYGEN_API_KEY
+      capabilities:
+        - sessions_spawn
 ---
 
 # AI Slide Generator - AnyGen
@@ -27,9 +25,9 @@ Create professional slide presentations using AnyGen OpenAPI (`www.anygen.io`). 
 
 ## Security & Permissions
 
-Slides are generated server-side by AnyGen's cloud API (`www.anygen.io`). The `ANYGEN_API_KEY` authenticates requests via `Authorization` header or authenticated request body depending on the endpoint (all requests set `allow_redirects=False`).
+Slides are generated server-side by AnyGen's OpenAPI (`www.anygen.io`). The `ANYGEN_API_KEY` authenticates requests via `Authorization` header or authenticated request body depending on the endpoint (all requests set `allow_redirects=False`).
 
-**What this skill does:** sends prompts to `www.anygen.io`, uploads user-specified reference files after consent, downloads generated PPTX to `~/.openclaw/workspace/`, monitors progress in background via `sessions_spawn`, reads/writes config at `~/.config/anygen/config.json`.
+**What this skill does:** sends prompts to `www.anygen.io`, uploads user-specified reference files after consent, downloads generated PPTX to `~/.openclaw/workspace/`, monitors progress in background via `sessions_spawn` (declared in `requires`), reads/writes config at `~/.config/anygen/config.json`.
 
 **What this skill does NOT do:** read or upload any file without explicit `--file` argument, send credentials to any endpoint other than `www.anygen.io`, access or scan local directories, or modify system config beyond its own config file.
 
@@ -45,7 +43,7 @@ Slides are generated server-side by AnyGen's cloud API (`www.anygen.io`). The `A
 
 ## Communication Style
 
-Use natural, user-friendly language throughout. Refer to things the way the user would — say "your slides", "generating", "checking progress" rather than internal identifiers or script commands. When presenting `reply` and `prompt` from `prepare`, preserve the original content as much as possible — translate into the user's language if needed, but do NOT rephrase, summarize, or add your own interpretation. Ask questions in your own voice (NOT "AnyGen wants to know…").
+Use natural, user-friendly language throughout. Refer to things the way the user would — say "your slides", "generating", "checking progress" rather than internal identifiers or script commands. When presenting `reply` and `prompt` from `prepare`, preserve the original content as much as possible — translate into the user's language if needed, but do NOT rephrase, summarize, or add your own interpretation. Ask questions in your own voice (NOT "AnyGen wants to know…"). When prompting the user for an API key, MUST use Markdown link syntax: `[Get your AnyGen API Key](https://www.anygen.io/home?auto_create_openclaw_key=1)` so the full URL is clickable.
 
 ## Slide Workflow (MUST Follow All 4 Phases)
 
