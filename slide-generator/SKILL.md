@@ -39,16 +39,62 @@ Slides are generated server-side by AnyGen's OpenAPI (`www.anygen.io`). The `ANY
 ## Prerequisites
 
 - Python3 and `requests`: `pip3 install requests`
-- AnyGen API Key (`sk-xxx`) — [Get one from AnyGen](https://www.anygen.io/home?auto_create_openclaw_key=1)
-- Configure key: `python3 scripts/anygen.py config set api_key "sk-xxx"` (saved to `~/.config/anygen/config.json`, chmod 600). Or set `ANYGEN_API_KEY` env var.
+- No manual API key setup is required. The skill can guide the user through web login and auto-configure the key.
+- Alternatively, users can manually configure an API key ([Get one from AnyGen](https://www.anygen.io/home?auto_create_openclaw_key=1)) by editing `~/.config/anygen/config.json`:
+  ```json
+  { "api_key": "sk-your-key-here" }
+  ```
+  Or via CLI: `python3 scripts/anygen.py config set api_key sk-your-key-here`
 
 > All `scripts/` paths below are relative to this skill's installation directory.
 
 ## Communication Style
 
-Use natural, user-friendly language throughout. Refer to things the way the user would — say "your slides", "generating", "checking progress" rather than internal identifiers or script commands. When presenting `reply` and `prompt` from `prepare`, preserve the original content as much as possible — translate into the user's language if needed, but do NOT rephrase, summarize, or add your own interpretation. Ask questions in your own voice (NOT "AnyGen wants to know…"). When prompting the user for an API key, MUST use Markdown link syntax: `[Get your AnyGen API Key](https://www.anygen.io/home?auto_create_openclaw_key=1)` so the full URL is clickable.
+Use natural, user-friendly language throughout. Refer to things the way the user would — say "your slides", "generating", "checking progress" rather than internal identifiers or script commands. Ask questions in your own voice (NOT "AnyGen wants to know…").
+
+**CRITICAL — `prepare` output handling:** The `reply` and `prompt` fields returned by `prepare` MUST be presented to the user **verbatim**. You are FORBIDDEN from summarizing, condensing, paraphrasing, rewriting, or adding your own interpretation. The ONLY allowed transformation is translating into the user's language when the content language differs — and even then, preserve the full structure, every detail, and all bullet points exactly as returned. Violating this rule degrades slide quality because the user cannot review or correct information they never saw.
 
 ## Slide Workflow (MUST Follow All 5 Phases)
+
+### Authentication Handling (applies to ALL phases)
+
+Every command that calls AnyGen OpenAPI (upload, prepare, create, poll, download,
+thumbnail, send-message, get-messages) automatically verifies the API key and credits
+before executing. If verification fails, the command exits with code 1 and prints a
+JSON object describing the issue.
+
+**When a command fails with `auth_required=true`:**
+1. Parse the JSON output to get `auth_url`, `fetch_token`, and `api_key_name`.
+2. Send `auth_url` to the user and ask them to open it in a browser.
+   **CRITICAL**: You MUST send the **complete, unmodified URL** as a clickable hyperlink.
+   Do NOT truncate or split the URL. If using markdown, put the full URL in both the
+   text and href parts: `[full_url](full_url)` to ensure the user sees and can click
+   the complete link.
+   You MUST also tell the user the API key name: "Authorization will create an API key
+   named **<api_key_name>**." This lets the user confirm the correct key on the
+   authorization page. Also tell the user that after they complete authorization, it will
+   be detected automatically — they do not need to come back and notify you.
+3. **MANDATORY** — Immediately launch a background auth monitor with `sessions_spawn` (timeout 960s).
+   You MUST spawn this subagent right after sending the auth URL — do NOT skip or defer it:
+   ```bash
+   python3 scripts/anygen.py auth-wait --fetch-token {fetch_token}
+   ```
+   The auth subagent's **only job** is to poll for the key and notify the user:
+   - On success → message user "API key configured successfully! Would you like me to
+     continue with your original request?", then reply `AUTH_COMPLETE`.
+   - On failure → extract the error reason and request_id from the `[ERROR]` output,
+     then message user: "Authorization didn't go through: <reason>. If you need help,
+     share this trace ID with support: <request_id>. You can try again or manually
+     configure an API key." Then reply `AUTH_FAILED`.
+   - On timeout → message user "authorization timed out, you can try again or manually
+     configure an API key", reply `AUTH_FAILED`.
+   It MUST NOT continue the original task.
+4. Do not block the conversation after launching the monitor.
+5. When the user confirms they want to continue, retry the failed command and resume
+   the original workflow from where it left off.
+
+**When a command fails with `insufficient_credits=true`:**
+- Inform the user that credits are insufficient and stop the task.
 
 ### Phase 1: Understand Requirements
 
@@ -70,7 +116,7 @@ python3 scripts/anygen.py prepare \
   --save ./conversation.json
 ```
 
-Present questions from `reply` to the user — preserve the original content, translate into the user's language if needed. Continue with user's answers:
+Present questions from `reply` to the user **verbatim** — do NOT summarize or condense. The only allowed change is translating into the user's language. Continue with user's answers:
 
 ```bash
 python3 scripts/anygen.py prepare \
@@ -88,7 +134,7 @@ Special cases:
 
 ### Phase 2: Confirm with User (MANDATORY)
 
-When `status="ready"`, present the `reply` and the `prompt` from `suggested_task_params` to the user as the slide outline. The prompt returned by `prepare` is already a detailed, well-structured outline — preserve its original content as much as possible. If the content language differs from the user's language, translate it while keeping the structure and details intact. Do NOT rephrase, summarize, or add your own interpretation.
+When `status="ready"`, present the `reply` and the `prompt` from `suggested_task_params` to the user as the slide outline. The prompt returned by `prepare` is already a detailed, well-structured outline — you MUST present it **verbatim, in full, with no omissions**. Do NOT summarize, condense, rephrase, or add your own interpretation. If the content language differs from the user's language, translate it while keeping every detail, bullet point, and structural element intact.
 
 Ask the user to confirm or request adjustments. NEVER auto-create without explicit approval.
 

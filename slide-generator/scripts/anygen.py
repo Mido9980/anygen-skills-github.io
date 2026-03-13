@@ -21,6 +21,8 @@ except ImportError:
 API_BASE = "https://www.anygen.io"
 POLL_INTERVAL = 3  # seconds
 MAX_POLL_TIME = 1200  # 20 minutes
+AUTH_POLL_INTERVAL = 10  # seconds
+AUTH_MAX_WAIT_TIME = 900  # 15 minutes
 OPENCLAW_WORKSPACE = Path.home() / ".openclaw" / "workspace"
 SKILL_NAME = "slide-generator"
 
@@ -71,6 +73,172 @@ def make_auth_token(api_key):
     """Build Bearer auth token from API key."""
     return api_key if api_key.startswith("Bearer ") else f"Bearer {api_key}"
 
+
+def verify_openapi_key(api_key=None, extra_headers=None):
+    """Call /v1/openapi/key/verify to validate key and credits."""
+    headers = {}
+    if api_key:
+        headers["Authorization"] = make_auth_token(api_key)
+    if extra_headers:
+        headers.update(extra_headers)
+
+    try:
+        response = requests.get(
+            f"{API_BASE}/v1/openapi/key/verify",
+            headers=headers if headers else None,
+            timeout=30,
+        )
+        log_request_id(response)
+        if response.status_code != 200:
+            log_error(f"HTTP error: {response.status_code}")
+            log_error(f"Response: {response.text[:500]}")
+            return None
+        return response.json()
+    except requests.RequestException as e:
+        log_error(f"Verify key failed: {e}")
+        return None
+    except json.JSONDecodeError:
+        log_error(f"Response parse failed: {response.text[:500]}")
+        return None
+
+
+def get_openapi_key(fetch_token, extra_headers=None):
+    """Call /v1/openapi/key/get to fetch allocated key."""
+    headers = {}
+    if extra_headers:
+        headers.update(extra_headers)
+
+    try:
+        response = requests.get(
+            f"{API_BASE}/v1/openapi/key/get",
+            params={"fetch_token": fetch_token},
+            headers=headers if headers else None,
+            timeout=30,
+        )
+        log_request_id(response)
+        if response.status_code != 200:
+            log_error(f"HTTP error: {response.status_code}")
+            log_error(f"Response: {response.text[:500]}")
+            return None
+        return response.json()
+    except requests.RequestException as e:
+        log_error(f"Get key failed: {e}")
+        return None
+    except json.JSONDecodeError:
+        log_error(f"Response parse failed: {response.text[:500]}")
+        return None
+
+
+def parse_credits(credits):
+    try:
+        return int(str(credits or "0"))
+    except (TypeError, ValueError):
+        return 0
+
+
+def ensure_anygen_auth(extra_headers=None, api_key_override=None):
+    """
+    Verify API key and credits before task commands.
+    Returns api_key when ready, otherwise prints structured JSON to stdout
+    describing the issue and returns None.
+    """
+    current_api_key = get_api_key(api_key_override)
+    verify_result = verify_openapi_key(current_api_key, extra_headers=extra_headers)
+    if not verify_result:
+        print(json.dumps({"auth_required": True, "reason": "verify_request_failed"}))
+        return None
+
+    if verify_result.get("verified"):
+        credits = parse_credits(verify_result.get("credits"))
+        if credits <= 0:
+            print(json.dumps({"auth_required": False, "insufficient_credits": True, "credits": 0, "reason": "no_credits"}))
+            return None
+        if not current_api_key:
+            print(json.dumps({"auth_required": True, "reason": "api_key_missing_locally"}))
+            return None
+        return current_api_key
+
+    auth_url = verify_result.get("auth_url", "")
+    fetch_token = verify_result.get("fetch_token", "")
+    api_key_name = verify_result.get("api_key_name", "")
+    auth_info = {
+        "auth_required": True,
+        "reason": "api_key_missing",
+    }
+    if auth_url:
+        auth_info["auth_url"] = auth_url
+    if fetch_token:
+        auth_info["fetch_token"] = fetch_token
+    if api_key_name:
+        auth_info["api_key_name"] = api_key_name
+    print(json.dumps(auth_info))
+    return None
+
+
+def _check_manual_api_key(extra_headers=None):
+    """Check if user manually configured an API key in config file.
+    Returns the key if valid, None otherwise."""
+    config = load_config()
+    manual_key = config.get("api_key")
+    if not manual_key:
+        return None
+
+    log_info("Found manually configured API key in config, verifying...")
+    verify_result = verify_openapi_key(manual_key, extra_headers=extra_headers)
+    if not verify_result:
+        log_error("Failed to verify manually configured API key (network error).")
+        return None
+
+    if verify_result.get("verified"):
+        credits = parse_credits(verify_result.get("credits"))
+        if credits <= 0:
+            log_error("Manually configured API key is valid but has no credits.")
+            return None
+        log_success("Manually configured API key is valid.")
+        return manual_key
+
+    log_error("Manually configured API key is invalid.")
+    return None
+
+
+def wait_and_configure_api_key(fetch_token, timeout=AUTH_MAX_WAIT_TIME, interval=AUTH_POLL_INTERVAL, extra_headers=None):
+    """Poll /v1/openapi/key/get and check config file for manual API key."""
+    start = time.time()
+    last_checked_key = None  # Track last checked manual key to avoid re-verifying same invalid key
+    while True:
+        elapsed = time.time() - start
+        if elapsed > timeout:
+            log_error("Did not receive API key authorization within timeout.")
+            return False
+
+        # Check if user manually configured an API key in config file
+        config = load_config()
+        current_key = config.get("api_key")
+        if current_key and current_key != last_checked_key:
+            last_checked_key = current_key
+            manual_key = _check_manual_api_key(extra_headers=extra_headers)
+            if manual_key:
+                log_success("API key configured successfully (manual config).")
+                print("You can continue your original operation now.")
+                return True
+
+        # Poll the server for key allocation via web login
+        result = get_openapi_key(fetch_token, extra_headers=extra_headers)
+        if result and result.get("allocated") and result.get("api_key"):
+            new_key = result.get("api_key")
+            config = load_config()
+            config["api_key"] = new_key
+            save_config(config)
+            log_success("API key configured successfully.")
+            print("You can continue your original operation now.")
+            return True
+        if result and result.get("error"):
+            request_id = result.get("request_id", "")
+            detail = f' (request_id: {request_id})' if request_id else ''
+            log_error(f"API key allocation failed: {result['error']}{detail}")
+            return False
+
+        time.sleep(interval)
 
 
 # ============ Upload Command ============
@@ -784,6 +952,18 @@ def main():
                            help="File token from upload (can be repeated)")
     run_parser.add_argument("--output", help="Output directory (optional)")
 
+    verify_parser = subparsers.add_parser("verify-key", help="Verify API key and credits")
+    verify_parser.add_argument("--api-key", "-k", help="Optional API key override")
+    verify_parser.add_argument("--header", "-H", action="append", dest="headers",
+                               help="Extra HTTP header (format: 'Key:Value')")
+
+    auth_wait_parser = subparsers.add_parser("auth-wait", help="Poll auth result and auto-configure API key")
+    auth_wait_parser.add_argument("--fetch-token", required=True, help="Fetch token from verify response")
+    auth_wait_parser.add_argument("--timeout", type=int, default=AUTH_MAX_WAIT_TIME, help="Max wait seconds")
+    auth_wait_parser.add_argument("--interval", type=int, default=AUTH_POLL_INTERVAL, help="Polling interval seconds")
+    auth_wait_parser.add_argument("--header", "-H", action="append", dest="headers",
+                                  help="Extra HTTP header (format: 'Key:Value')")
+
     # ---- config command ----
     config_parser = subparsers.add_parser("config", help="Manage configuration")
     config_subparsers = config_parser.add_subparsers(dest="config_action", help="Config actions")
@@ -857,16 +1037,27 @@ def main():
                 log_error(f"{args.key} not found in config")
             sys.exit(0)
 
-    # Resolve API key for all other commands
-    api_key = get_api_key(getattr(args, 'api_key', None))
-    if not api_key:
-        log_error("API Key not found. Provide one via:")
-        print("  1. Command line: --api-key sk-xxx")
-        print(f"  2. Environment variable: export {ENV_API_KEY}=sk-xxx")
-        print(f"  3. Config file: python3 anygen.py config set api_key sk-xxx")
-        sys.exit(1)
-
     extra_headers = parse_headers(args.headers) if hasattr(args, 'headers') else None
+
+    if args.command == "verify-key":
+        verify_result = verify_openapi_key(get_api_key(getattr(args, "api_key", None)), extra_headers=extra_headers)
+        if not verify_result:
+            sys.exit(1)
+        print(json.dumps(verify_result, ensure_ascii=False))
+        sys.exit(0)
+
+    if args.command == "auth-wait":
+        success = wait_and_configure_api_key(
+            fetch_token=args.fetch_token,
+            timeout=args.timeout,
+            interval=args.interval,
+            extra_headers=extra_headers,
+        )
+        sys.exit(0 if success else 1)
+
+    api_key = ensure_anygen_auth(extra_headers=extra_headers, api_key_override=getattr(args, "api_key", None))
+    if not api_key:
+        sys.exit(1)
 
     if args.command == "upload":
         token = upload_file(api_key, args.file, extra_headers=extra_headers)
